@@ -1,0 +1,189 @@
+# depslib dependency file v1.0
+1345071670 source:e:\my creations\airplane\arduino stuff\all_sensors\lib\newping.cpp
+	"NewPing.h"
+
+1442606526 e:\my creations\airplane\arduino stuff\all_sensors\lib\newping.h
+	<Arduino.h>
+	<WProgram.h>
+	<pins_arduino.h>
+	<avr/io.h>
+	<avr/interrupt.h>
+
+1371036702 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\arduino.h
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	<avr/pgmspace.h>
+	<avr/io.h>
+	<avr/interrupt.h>
+	"binary.h"
+	"WCharacter.h"
+	"WString.h"
+	"HardwareSerial.h"
+	"pins_arduino.h"
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\binary.h
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\wcharacter.h
+	<ctype.h>
+
+1371036734 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\wstring.h
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<avr/pgmspace.h>
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\hardwareserial.h
+	<inttypes.h>
+	"Stream.h"
+	"USBAPI.h"
+
+1371036430 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\stream.h
+	<inttypes.h>
+	"Print.h"
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\print.h
+	<inttypes.h>
+	<stdio.h>
+	"WString.h"
+	"Printable.h"
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\printable.h
+	<new.h>
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\new.h
+	<stdlib.h>
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\cores\arduino\usbapi.h
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\variants\standard\pins_arduino.h
+	<avr/pgmspace.h>
+
+1442856718 source:e:\my creations\airplane\arduino stuff\all_sensors\i2cdev.cpp
+	"I2Cdev.h"
+
+1442856718 e:\my creations\airplane\arduino stuff\all_sensors\i2cdev.h
+	"WProgram.h"
+	"Arduino.h"
+	<Wire.h>
+	<I2C.h>
+	<spark_wiring_i2c.h>
+
+1442856718 source:e:\my creations\airplane\arduino stuff\all_sensors\mpu6050.cpp
+	"MPU6050.h"
+
+1442856718 e:\my creations\airplane\arduino stuff\all_sensors\mpu6050.h
+	"I2Cdev.h"
+	<avr/pgmspace.h>
+
+1345071670 source:e:\my creations\airplane\arduino stuff\all_sensors\newping.cpp
+	"NewPing.h"
+
+1442606526 e:\my creations\airplane\arduino stuff\all_sensors\newping.h
+	<Arduino.h>
+	<WProgram.h>
+	<pins_arduino.h>
+	<avr/io.h>
+	<avr/interrupt.h>
+
+1424644908 source:e:\my creations\airplane\arduino stuff\all_sensors\rcarduinofastlib.cpp
+	"Arduino.h"
+	"RCArduinoFastLib.h"
+
+1424644908 e:\my creations\airplane\arduino stuff\all_sensors\rcarduinofastlib.h
+	"Arduino.h"
+
+1443143516 source:e:\my creations\airplane\arduino stuff\all_sensors\all_sensors.ino
+	<Arduino.h>
+	"MemoryFree.h"
+	"I2Cdev.h"
+	"MPU6050_6Axis_MotionApps20.h"
+	"Wire.h"
+	"Airplane.h"
+	<SPI.h>
+	<SD.h>
+
+1442856718 e:\my creations\airplane\arduino stuff\all_sensors\mpu6050_6axis_motionapps20.h
+	"I2Cdev.h"
+	"helper_3dmath.h"
+	"MPU6050.h"
+	<avr/pgmspace.h>
+	<inttypes.h>
+
+1442856718 e:\my creations\airplane\arduino stuff\all_sensors\helper_3dmath.h
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\sd.h
+	"Arduino.h"
+	"WProgram.h"
+	<SPI.h>
+	<utility/SdFat.h>
+	<utility/SdFatUtil.h>
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\sdfat.h
+	<avr/pgmspace.h>
+	"Sd2Card.h"
+	"FatStructs.h"
+	"Print.h"
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\sd2card.h
+	"Sd2PinMap.h"
+	"SdInfo.h"
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\sd2pinmap.h
+	<Arduino.h>
+	<avr/io.h>
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\sdinfo.h
+	<stdint.h>
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\fatstructs.h
+
+1439993848 e:\my creations\airplane\arduino stuff\all_sensors\utility\sdfatutil.h
+	<Arduino.h>
+	<avr/pgmspace.h>
+
+1439993848 source:e:\my creations\airplane\arduino stuff\all_sensors\file.cpp
+	<SD.h>
+
+1439993848 source:e:\my creations\airplane\arduino stuff\all_sensors\sd.cpp
+	"SD.h"
+
+1439993848 source:e:\my creations\airplane\arduino stuff\all_sensors\utility\sd2card.cpp
+	"Arduino.h"
+	"WProgram.h"
+	"Sd2Card.h"
+	<SPI.h>
+
+1439993848 source:e:\my creations\airplane\arduino stuff\all_sensors\utility\sdfile.cpp
+	"SdFat.h"
+	<avr/pgmspace.h>
+	<Arduino.h>
+
+1439993848 source:e:\my creations\airplane\arduino stuff\all_sensors\utility\sdvolume.cpp
+	"SdFat.h"
+
+1443154727 e:\my creations\airplane\arduino stuff\all_sensors\airplane.h
+	<SPI.h>
+	<SD.h>
+
+1443130946 e:\my creations\airplane\arduino stuff\all_sensors\airplane.cpp
+	"Airplane.h"
+
+1443154725 source:e:\my creations\airplane\arduino stuff\all_sensors\airplane.cpp
+	"Airplane.h"
+
+1362990550 e:\my creations\airplane\arduino stuff\arduino_cb_plugin\codeblocks\arduino\hardware\arduino\variants\eightanaloginputs\pins_arduino.h
+	"../standard/pins_arduino.h"
+
+1443136895 source:e:\my creations\airplane\arduino stuff\all_sensors\class_airplane.cpp
+	"class_Airplane.h"
+
+1443136910 e:\my creations\airplane\arduino stuff\all_sensors\class_airplane.h
+	<SPI.h>
+	<SD.h>
+
+1303662170 source:e:\my creations\airplane\arduino stuff\all_sensors\memoryfree.cpp
+	"MemoryFree.h"
+
+1303662170 e:\my creations\airplane\arduino stuff\all_sensors\memoryfree.h
+
