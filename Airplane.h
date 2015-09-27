@@ -1,11 +1,14 @@
 #ifndef CLASS_AIRPLANE_H_INCLUDED
 #define CLASS_AIRPLANE_H_INCLUDED
 
-
+//#include "MPU6050_6Axis_MotionApps20.h"
+//#include "MemoryFree.h"
+//#include "DMP.h"
 #include <SPI.h>
 #include <SD.h>
 const int chipSelect = 10;
 
+//extern MPU6050 mpu;
 
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller

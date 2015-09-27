@@ -653,6 +653,8 @@
 		</Compiler>
 		<Unit filename="Airplane.cpp" />
 		<Unit filename="Airplane.h" />
+		<Unit filename="DMP.cpp" />
+		<Unit filename="DMP.h" />
 		<Unit filename="File.cpp" />
 		<Unit filename="I2Cdev.cpp" />
 		<Unit filename="I2Cdev.h" />
@@ -668,6 +670,7 @@
 		<Unit filename="RCArduinoFastLib.h" />
 		<Unit filename="SD.cpp" />
 		<Unit filename="SD.h" />
+		<Unit filename="all_sensors.h" />
 		<Unit filename="all_sensors.ino">
 			<Option compile="1" />
 			<Option link="1" />
