@@ -21,6 +21,7 @@
 
 int update_imu();   //call this to update IMU values (must call often)
 int initialize_imu(); //call this to start the IMU (call once)
+int initialize_SD();  //call this to start the SD card (call once)
 extern Airplane a;
 
 extern MPU6050 mpu;

@@ -157,11 +157,11 @@ dmpReady = false;
 //initialize SD card
 //find run number for test
 initialize_imu();
-
+initialize_SD();
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
 
-
+/*
     // == SD CARD INIT == //
     Serial.print("Initializing SD card...");
     pinMode(SS, OUTPUT);
@@ -200,6 +200,7 @@ initialize_imu();
   	// if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
+  */
   Serial.print("Free Memory: ");
   Serial.println(freeMemory());
 //SD.mkdir("datalog");
@@ -283,7 +284,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
             Serial.print(ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[2] * 180/M_PI);
-            Serial.print("\t cpu2: ");
+            Serial.print("\t cpu: ");
             Serial.println(freeMemory());
 
 
@@ -349,4 +350,45 @@ int initialize_imu(){
         Serial.println(F(")"));
     }
 
+}
+int initialize_SD(){
+    Serial.println("WHOO1!");
+       // == SD CARD INIT == //
+    Serial.print("Initializing SD card...");
+    pinMode(SS, OUTPUT);
+    if (!SD.begin(chipSelect)) {
+        Serial.println("initialization failed!");
+        return 1;
+    }
+    Serial.println("SD initialization done.");
+
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  a.myFile = SD.open("datalog/test2.txt", FILE_WRITE);
+    // if the file opened okay, write to it:
+  if (a.myFile) {
+    Serial.print("Writing to test.txt...");
+    a.myFile.println("testing 1, 2, 3.");
+	// close the file:
+    a.myFile.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+  // re-open the file for reading:
+  a.myFile = SD.open("datalog/test2.txt");
+  if (a.myFile) {
+    Serial.println("test.txt:");
+
+    // read from the file until there's nothing else in it:
+    while (a.myFile.available()) {
+    	Serial.write(a.myFile.read());
+    }
+    // close the file:
+    a.myFile.close();
+  } else {
+  	// if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
 }
