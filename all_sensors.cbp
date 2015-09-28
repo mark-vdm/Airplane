@@ -653,8 +653,6 @@
 		</Compiler>
 		<Unit filename="Airplane.cpp" />
 		<Unit filename="Airplane.h" />
-		<Unit filename="DMP.cpp" />
-		<Unit filename="DMP.h" />
 		<Unit filename="File.cpp" />
 		<Unit filename="I2Cdev.cpp" />
 		<Unit filename="I2Cdev.h" />

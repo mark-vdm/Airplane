@@ -6,6 +6,7 @@
 //#include "DMP.h"
 #include <SPI.h>
 #include <SD.h>
+#include <string.h>
 const int chipSelect = 10;
 
 //extern MPU6050 mpu;
@@ -21,6 +22,14 @@ class Airplane{
         void outpt();
 //        bool create_file(); //Adds another data file. Increments title. Adds unique ID for the set of runs
         File myFile;
+        //int init_SD(); //This does not work. Only works when in the main file
+        int index_log(); //get the index of the previous log
+        int SD_newLog(); //create new log file
+        void SD_close(); //close current log file
+
+        uint16_t flight_index; //index of the flight (0-9999)
+        uint8_t record_index; //index of the section of flight (0-255)
+
 
     private:
         uint16_t flight_id; //flight number - used for data file name
