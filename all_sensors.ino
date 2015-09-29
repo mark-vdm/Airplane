@@ -1,6 +1,8 @@
 //#include <Arduino.h>
 //#include "MemoryFree.h"
+
 #include "all_sensors.h"
+
 /*
   Turns on an LED on for one second, then off for one second, repeatedly.
 */
@@ -132,6 +134,19 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
+//ISR for ultrasonic sensor
+void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+  // Don't do anything here!
+  if (ultra_bot.check_timer()) { // This is how you check to see if the ping was received.
+    // Here's where you can add code.
+    Serial.print("Ping: ");
+    Serial.print(ultra_bot.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    Serial.println("cm");
+    //get rid of the PRINTS.
+    //Save the distance to a global variable
+  }
+  // Don't do anything here!
+}
 
 
 // ================================================================
@@ -151,19 +166,13 @@ dmpReady = false;
     // initialize serial communication
     Serial.begin(115200);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
-
-//test connection mpu6050 dmp
-//initialize mpu6050 dmp
-//initialize SD card
-//find run number for test
-initialize_imu();
-initialize_SD();
-//a.init_SD();
-delay(1000);
-//a.SD_newLog();
-a.index_log();
-
-delay(2000);
+Serial.print("Check ariplane: ");
+Serial.println(a.flight_index);
+    initialize_imu();
+    //initialize_SD();
+    delay(1000);
+    //a.SD_newLog();
+    //a.index_log();
 
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
@@ -171,6 +180,9 @@ delay(2000);
   Serial.print("Free Memory: ");
   Serial.println(freeMemory());
 //SD.mkdir("datalog");
+
+    pingTimer = millis();
+
 }
 
 
@@ -200,6 +212,10 @@ c = 0;
         // .
         // .
         // .
+        if (millis() >= pingTimer){
+            ultra_bot.ping_timer(echoCheck);
+            pingTimer += pingSpeed;
+        }
     }
 Serial.print(c);
 // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
@@ -270,10 +286,6 @@ int initialize_imu(){
     //Serial.println(F("Testing device connections..."));
     Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
-
-//a.outpt();
-
-
     // wait for ready
     Serial.println(F("\nSend any character to begin DMP programming and demo: "));
     while (Serial.available() && Serial.read()); // empty buffer
@@ -281,7 +293,7 @@ int initialize_imu(){
     while (Serial.available() && Serial.read()); // empty buffer again
 
     // load and configure the DMP
-    Serial.println(F("Initializing DMP..."));
+//    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
@@ -293,16 +305,16 @@ int initialize_imu(){
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
         // turn on the DMP, now that it's ready
-        Serial.println(F("Enabling DMP..."));
+ //       Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
 
         // enable Arduino interrupt detection
-        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+//      Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
         attachInterrupt(0, dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+//        Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpReady = true;
 
         // get expected DMP packet size for later comparison
@@ -318,6 +330,8 @@ int initialize_imu(){
     }
 
 }
+
+#ifdef SD_CARD_USED
 int initialize_SD(){  //Mysterious failure when this function is in a different file
        // == SD CARD INIT == //
     Serial.print("Initializing SD card...");
@@ -358,3 +372,4 @@ int initialize_SD(){  //Mysterious failure when this function is in a different 
     Serial.println("error opening test.txt");
   }
 }
+#endif

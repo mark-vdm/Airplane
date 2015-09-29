@@ -7,16 +7,66 @@ Airplane::Airplane(){
 //    blinkState = false;
     // MPU control/status vars
   //  dmpReady = false;
-  record_index = 0;
+  log_index = 0;
+  flight_index = 12;
+
+  //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+  //NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+  //pingTimer = millis(); //start timer for ultrasonics
 }
 
 void Airplane::outpt(){
-    Serial.println("I'm here");
+//    Serial.println("I'm here");
 }
 
+
+
+
+
+#ifdef SD_CARD_USED
+void Airplane::SD_close(){ //close current log file
+    myFile.close();
+}
+//Create a new log file.
+//Find the name. Open file. Increment counter. DO NOT CLOSE
 int Airplane::SD_newLog(){
+    char name[] = "0000x000.txt"; //create name for file
+    uint16_t dum1 = flight_index;
+    uint8_t dum2 = log_index;
+
+    uint8_t digits = 1;
+
+    //for the flight index number
+    while (dum1/=10)   //find  number of digits
+        ++digits;
+    dum1 = flight_index;
+
+    //modify the name to fit with flight_index and log_index
+    for (uint8_t i = 0; i++; i<digits)
+    {
+        uint8_t j = 1;
+        while(j<digits)
+            dum1/=10;
+        name[3-i] = dum1%10 + 48; //add 48 to convert int to char
+    }
+
+    //for the log index number
+    digits = 1;
+    while (dum2/=10)   //find  number of digits
+        ++digits;
+    dum2 = log_index;
+    //modify the name to fit with flight_index and log_index
+    for (uint8_t i = 0; i++; i<digits)
+    {
+        uint8_t j = 1;
+        while(j<digits)
+            dum1/=10;
+        name[3-i] = dum1%10 + 48; //add 48 to convert int to char
+    }
+
+
     Serial.println("New log file:");
-    myFile = SD.open("newfile.txt", FILE_WRITE);
+    myFile = SD.open(name, FILE_WRITE);
 
     if (myFile) {
     //Serial.print("Writing to newfile.txt...");
@@ -29,7 +79,7 @@ int Airplane::SD_newLog(){
     Serial.println("error opening newfile.txt");
   }
   // re-open the file for reading:
-  myFile = SD.open("newfile.txt");
+  myFile = SD.open(name);
   if (myFile) {
     Serial.println("test.txt:");
 
@@ -43,10 +93,10 @@ int Airplane::SD_newLog(){
   	// if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
+  log_index ++;
 }
-
 //Index log: create index if none exists
-//Else, add a new index. WORKING
+//Else, find value of previous index, add new flight index. WORKING
 int Airplane::index_log(){
     char dum;
     flight_index = 0; //initialize to 0 so index start at zero if no index_log.txt
@@ -63,6 +113,8 @@ int Airplane::index_log(){
                 flight_index = (flight_index * 10) + (dum-48); //add the chars together
         }
         flight_index++; //increment the flight index
+        if (flight_index > 9999) //make sure flight_index is 4 digits
+            flight_index = 0;
         //Serial.print("value of index: ");
         //Serial.print(flight_index);
     }
@@ -84,3 +136,4 @@ if (myFile) {
   myFile.close(); //close the file
   return 0; //return no error
 }
+#endif
