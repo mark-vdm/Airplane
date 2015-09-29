@@ -40,13 +40,14 @@ extern Airplane a;
 
 extern MPU6050 mpu;
 extern volatile bool mpuInterrupt;
-extern Airplane a;
+//extern Airplane a;
 
 //Ultrasonic vars
 NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);
 unsigned int pingSpeed = 50; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
 unsigned long pingTimer;     // Holds the next ping time.
-
+uint8_t ULTRA_SELECT = 0;
 
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
@@ -67,6 +68,5 @@ VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measure
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-
 
 #endif // ALL_SENSORS_H_INCLUDED

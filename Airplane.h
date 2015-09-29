@@ -3,39 +3,38 @@
 
 //#define SD_CARD_USED //Uncomment to use SD card functions (very old - might be broken)
 #include <Arduino.h>
-
+#include "helper_3dmath.h"
 #ifdef SD_CARD_USED
 #include <SPI.h>
 #include <SD.h>
 //#include <SdFat.h>
 //extern SdFat SD;
-#include <string.h>
+//#include <string.h>
 const uint8_t chipSelect = 10;
 #endif
 
-//#include "NewPing.h"
 
-// ULTRASONIC SENSORS //
-//#define TRIGGER_PIN 8 //arduino pin on trigger
-//#define ECHO_PIN 8 //Arduino pin to echo
-//#define TRIGGER_PINR 9 //arduino pin on trigger
-//#define ECHO_PINR 9 //Arduino pin to echo
-//#define MAX_DISTANCE 300 //Maximum distance for ping (cm)
-
-//extern MPU6050 mpu;
 
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
 //bool aARM_RAD_FLAG;  // TRUE when radio sends true signal (!-100)
 //bool aARM_ARD_FLAG; // Set to false when ARM_FLAG is false. Set true when arduino receives arm cmd
 
+struct sensordata{
+    Quaternion q;           // [w, x, y, z]         quaternion container
+    VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+    VectorInt16 gy;     // [x, y, z]            gravity-free accel sensor measurements
+    float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+    uint8_t ult_b;
+    uint8_t ult_r;
+};
 
 class Airplane{
     public:
         Airplane(); //constructor
         void outpt();
 
-        //sensordata dat;
+        sensordata dat; //holds onto the raw sensor values
 
 /*
         //Ultrasonic Functions/*
@@ -63,7 +62,6 @@ class Airplane{
 
 };
 
-struct sensordata{
-};
+
 
 #endif // CLASS_AIRPLANE_H_INCLUDED

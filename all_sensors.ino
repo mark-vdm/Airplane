@@ -134,18 +134,17 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
-//ISR for ultrasonic sensor
+//ISR for ultrasonic sensor. Must use separate ISR for each sensor. Must not run simultaneously
 void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
-  // Don't do anything here!
+  // ult_b&r are single-byte vars, so they don't need read/write protection. http://forum.arduino.cc/index.php?topic=45239.0
   if (ultra_bot.check_timer()) { // This is how you check to see if the ping was received.
-    // Here's where you can add code.
-    Serial.print("Ping: ");
-    Serial.print(ultra_bot.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    Serial.println("cm");
-    //get rid of the PRINTS.
-    //Save the distance to a global variable
+       a.dat.ult_b = ultra_bot.ping_result / US_ROUNDTRIP_CM;
   }
-  // Don't do anything here!
+}
+void echoCheck_r() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+  if (ultra_rear.check_timer()) { // This is how you check to see if the ping was received.
+       a.dat.ult_r = ultra_rear.ping_result / US_ROUNDTRIP_CM;
+  }
 }
 
 
@@ -212,9 +211,18 @@ c = 0;
         // .
         // .
         // .
+
+        // ULTRASONIC: send another ping if 50ms has passed since last
         if (millis() >= pingTimer){
-            ultra_bot.ping_timer(echoCheck);
-            pingTimer += pingSpeed;
+            if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
+                ultra_bot.ping_timer(echoCheck);
+                pingTimer += pingSpeed;
+                ULTRA_SELECT = 0;
+            }else if (!ULTRA_SELECT){
+                ultra_rear.ping_timer(echoCheck_r);
+                pingTimer += pingSpeed;
+                ULTRA_SELECT = 1;
+            }
         }
     }
 Serial.print(c);
@@ -261,16 +269,19 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            Serial.print("ypr\t");
+            /*Serial.print("ypr\t");
             Serial.print(ypr[0] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[2] * 180/M_PI);
             Serial.print("\t cpu: ");
-            Serial.println(freeMemory());
-
-
+            Serial.print(freeMemory());
+            */
+            Serial.print("\t UltraB: ");
+            Serial.print(a.dat.ult_b);
+            Serial.print("\t UltraR: ");
+            Serial.println(a.dat.ult_r);
 
         // blink LED to indicate activity
         blinkState = !blinkState;

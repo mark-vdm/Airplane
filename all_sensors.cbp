@@ -285,21 +285,22 @@
 				<Option type="1" />
 				<Option compiler="avrgcc" />
 				<Compiler>
+					<Add option="-Os" />
+					<Add option="-O2" />
 					<Add option="-x c++" />
 					<Add option="-mmcu=$(MCU)" />
 					<Add option="-DF_CPU=16000000L" />
 					<Add option="-D__AVR_ATmega328P__" />
-					<Add option="-O2" />
-					<Add option="-Os" />
 					<Add directory="$(ARDUINO_DIR)/hardware/arduino/cores/arduino" />
 					<Add directory="$(ARDUINO_DIR)/libraries" />
 					<Add directory="$(ARDUINO_DIR)/hardware/arduino/variants/eightanaloginputs" />
+					<Add directory="libraries" />
 				</Compiler>
 				<Linker>
+					<Add option="-s" />
 					<Add option="-mmcu=$(MCU)" />
 					<Add option='&quot;$(PROJECT_DIR)${TARGET_OUTPUT_DIR}/lib_${BOARD_ID}_${MCU_CLOCK}.a&quot;' />
 					<Add option='&quot;$(PROJECT_DIR)${TARGET_OUTPUT_DIR}/core_${BOARD_ID}_${MCU_CLOCK}.a&quot;' />
-					<Add option="-s" />
 				</Linker>
 				<ExtraCommands>
 					<Add before='$(TARGET_COMPILER_DIR)ArduinoUploader &quot;$(PROJECT_DIR).&quot; $(BOARD_ID) - $(MCU_CLOCK) 0 &quot;$(PROJECT_DIR)${TARGET_OUTPUT_DIR}/lib_${BOARD_ID}_${MCU_CLOCK}.a&quot; &quot;$(PROJECT_DIR)${TARGET_OUTPUT_DIR}/core_${BOARD_ID}_${MCU_CLOCK}.a&quot;' />
@@ -650,40 +651,31 @@
 		</Build>
 		<Compiler>
 			<Add directory="." />
+			<Add directory="libraries" />
 		</Compiler>
 		<Unit filename="Airplane.cpp" />
 		<Unit filename="Airplane.h" />
-		<Unit filename="File.cpp" />
 		<Unit filename="I2Cdev.cpp" />
 		<Unit filename="I2Cdev.h" />
 		<Unit filename="MPU6050.cpp" />
 		<Unit filename="MPU6050.h" />
 		<Unit filename="MPU6050_6Axis_MotionApps20.h" />
+		<Unit filename="MPU6050_9Axis_MotionApps41.h" />
 		<Unit filename="MemoryFree.cpp" />
 		<Unit filename="MemoryFree.h" />
-		<Unit filename="NewPing.cpp" />
-		<Unit filename="NewPing.h" />
-		<Unit filename="PinChangeInt.h" />
-		<Unit filename="RCArduinoFastLib.cpp" />
-		<Unit filename="RCArduinoFastLib.h" />
-		<Unit filename="SD.cpp" />
-		<Unit filename="SD.h" />
 		<Unit filename="all_sensors.h" />
 		<Unit filename="all_sensors.ino">
 			<Option compile="1" />
 			<Option link="1" />
 		</Unit>
 		<Unit filename="helper_3dmath.h" />
-		<Unit filename="utility/FatStructs.h" />
-		<Unit filename="utility/Sd2Card.cpp" />
-		<Unit filename="utility/Sd2Card.h" />
-		<Unit filename="utility/Sd2PinMap.h" />
-		<Unit filename="utility/SdFat.h" />
-		<Unit filename="utility/SdFatUtil.h" />
-		<Unit filename="utility/SdFatmainpage.h" />
-		<Unit filename="utility/SdFile.cpp" />
-		<Unit filename="utility/SdInfo.h" />
-		<Unit filename="utility/SdVolume.cpp" />
+		<Unit filename="libraries/MyPing.cpp" />
+		<Unit filename="libraries/MyPing.h" />
+		<Unit filename="libraries/NewPing.cpp" />
+		<Unit filename="libraries/NewPing.h" />
+		<Unit filename="libraries/PinChangeInt.h" />
+		<Unit filename="libraries/RCArduinoFastLib.cpp" />
+		<Unit filename="libraries/RCArduinoFastLib.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

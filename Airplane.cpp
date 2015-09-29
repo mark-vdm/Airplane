@@ -8,7 +8,8 @@ Airplane::Airplane(){
     // MPU control/status vars
   //  dmpReady = false;
   log_index = 0;
-  flight_index = 12;
+  flight_index = 0;
+    sensordata dat = {}; //initialize all data values to zero
 
   //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
   //NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
