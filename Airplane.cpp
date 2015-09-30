@@ -21,6 +21,58 @@ void Airplane::outpt(){
 }
 
 
+void Airplane::print_sensors(uint8_t select){
+    //Print the selected values of sensors - indicated by bit status
+    //0 - IMU ypr       bin: 1 hex: 01
+    //1 - IMU acc       bin: 10 hex: 02
+    //2 - IMU gyr       bin: 100 hex: 04
+    //3 - Ultrasonic    bin: 1000 hex: 08
+    //4 - Memory useage bin: 10000 hex: 10
+    //5    hex: 20
+    //6    hex: 40
+    //7    hex: 80
+    if(select){ //if any options are selected...
+        if (select & 0x01){ // IMU ypr
+            Serial.print("ypr\t");
+            Serial.print(dat.ypr[0] * 180/M_PI);
+            Serial.print("\t");
+            Serial.print(dat.ypr[1] * 180/M_PI);
+            Serial.print("\t");
+            Serial.print(dat.ypr[2] * 180/M_PI);
+            Serial.print("\t");
+        }
+        if (select & 0x02){
+            Serial.print("acc\t");
+            Serial.print(dat.aa.x);
+            Serial.print("\t");
+            Serial.print(dat.aa.y);
+            Serial.print("\t");
+            Serial.print(dat.aa.z);
+            Serial.print("\t");
+        }
+       if (select & 0x04){
+            Serial.print("gy\t");
+            Serial.print(dat.gy.x);
+            Serial.print("\t");
+            Serial.print(dat.gy.y);
+            Serial.print("\t");
+            Serial.print(dat.gy.z);
+            Serial.print("\t");
+        }
+        if (select & 0x08){
+            Serial.print("UltraB: ");
+            Serial.print(dat.ult_b);
+            Serial.print("\t UltraR: ");
+            Serial.println(dat.ult_r);
+        }
+        if (select & 0x10){
+            Serial.print("\t cpu: ");
+            Serial.print(freeMemory());
+        }
+        Serial.println("");
+    }
+}
+
 
 
 
@@ -137,4 +189,5 @@ if (myFile) {
   myFile.close(); //close the file
   return 0; //return no error
 }
+
 #endif

@@ -10,7 +10,7 @@
 
 
 #include "MPU6050_6Axis_MotionApps20.h"
-#include "MemoryFree.h"
+//#include "MemoryFree.h"
 #include "I2Cdev.h"
 #include "Airplane.h"
 #include "NewPing.h"
@@ -63,6 +63,7 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 // orientation/motion vars
 Quaternion q;           // [w, x, y, z]         quaternion container
 VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+VectorInt16 gy;
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector

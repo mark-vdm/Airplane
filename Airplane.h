@@ -4,6 +4,8 @@
 //#define SD_CARD_USED //Uncomment to use SD card functions (very old - might be broken)
 #include <Arduino.h>
 #include "helper_3dmath.h"
+#include "MemoryFree.h"
+
 #ifdef SD_CARD_USED
 #include <SPI.h>
 #include <SD.h>
@@ -27,6 +29,7 @@ struct sensordata{
     float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
     uint8_t ult_b;
     uint8_t ult_r;
+    unsigned long dt;
 };
 
 class Airplane{
@@ -35,7 +38,7 @@ class Airplane{
         void outpt();
 
         sensordata dat; //holds onto the raw sensor values
-
+        void print_sensors(uint8_t select);
 /*
         //Ultrasonic Functions/*
         NewPing ultra_bot();

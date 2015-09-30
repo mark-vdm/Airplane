@@ -3,30 +3,6 @@
 
 #include "all_sensors.h"
 
-/*
-  Turns on an LED on for one second, then off for one second, repeatedly.
-*/
-
-
-// I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
-// 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
-// Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
-//
-// Changelog:
-//      2013-05-08 - added seamless Fastwire support
-//                 - added note about gyro calibration
-//      2012-06-21 - added note about Arduino 1.0.1 + Leonardo compatibility error
-//      2012-06-20 - improved FIFO overflow handling and simplified read process
-//      2012-06-19 - completely rearranged DMP initialization code and simplification
-//      2012-06-13 - pull gyro and accel data from FIFO packet instead of reading directly
-//      2012-06-09 - fix broken FIFO read sequence and change interrupt detection to RISING
-//      2012-06-05 - add gravity-compensated initial reference frame acceleration output
-//                 - add 3D math helper file to DMP6 example sketch
-//                 - add Euler output and Yaw/Pitch/Roll output formats
-//      2012-06-04 - remove accel offset clearing for better results (thanks Sungon Lee)
-//      2012-06-01 - fixed gyro sensitivity to be 2000 deg/sec instead of 250
-//      2012-05-30 - basic DMP initialization working
-
 /* ============================================
 I2Cdev device library code is placed under the MIT license
 Copyright (c) 2012 Jeff Rowberg
@@ -51,79 +27,17 @@ THE SOFTWARE.
 ===============================================
 */
 
-// I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
-// for both classes must be in the include path of your project
-//#include "I2Cdev.h"
-
-//#include "MPU6050_6Axis_MotionApps20.h"
-//#include "MPU6050.h" // not necessary if using MotionApps include file
-
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
-/*#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
 #endif
-*/
 
-// class default I2C address is 0x68
-// specific I2C addresses may be passed as a parameter here
-// AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
-// AD0 high = 0x69
+
 MPU6050 mpu;
 
 
-//#define OUTPUT_READABLE_QUATERNION
-
-//#define OUTPUT_READABLE_EULER
-
-//#define OUTPUT_READABLE_YAWPITCHROLL
-
-
-//#define OUTPUT_READABLE_REALACCEL
-
-//#define OUTPUT_READABLE_WORLDACCEL
-
-//#define OUTPUT_TEAPOT
-
-
-/*
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-bool blinkState = false;
-
-// MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
-uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;     // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64]; // FIFO storage buffer
-
-// orientation/motion vars
-Quaternion q;           // [w, x, y, z]         quaternion container
-VectorInt16 aa;         // [x, y, z]            accel sensor measurements
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
-VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
-float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-*/
-
-
-
-// packet structure for InvenSense teapot demo
-//uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
-
-// SD CARD STUFF //
-//#include "Airplane.h"
 bool dmpReady = false;
 Airplane a;
 
-/*
-#include <SPI.h>
-#include <SD.h>
-File air.myFile;
-const int chipSelect = 10;
-*/
 
 // ================================================================
 // ===           INTERRUPT DETECTION ROUTINES MUST BE IN MAIN   ===
@@ -131,12 +45,15 @@ const int chipSelect = 10;
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
+    //** MAKE SURE that the RECEIVER interrupts don't
     mpuInterrupt = true;
 }
+
 
 //ISR for ultrasonic sensor. Must use separate ISR for each sensor. Must not run simultaneously
 void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   // ult_b&r are single-byte vars, so they don't need read/write protection. http://forum.arduino.cc/index.php?topic=45239.0
+  //56 us if there is trigger, 12 us if not.
   if (ultra_bot.check_timer()) { // This is how you check to see if the ping was received.
        a.dat.ult_b = ultra_bot.ping_result / US_ROUNDTRIP_CM;
   }
@@ -165,23 +82,17 @@ dmpReady = false;
     // initialize serial communication
     Serial.begin(115200);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
-Serial.print("Check ariplane: ");
-Serial.println(a.flight_index);
+
     initialize_imu();
-    //initialize_SD();
-    delay(1000);
-    //a.SD_newLog();
-    //a.index_log();
+    delay(100);
 
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
 
-  Serial.print("Free Memory: ");
-  Serial.println(freeMemory());
-//SD.mkdir("datalog");
+    Serial.print("Free Memory: ");
+    Serial.println(freeMemory());
 
-    pingTimer = millis();
-
+    pingTimer = millis(); //this is used for ultrasonic sensors
 }
 
 
@@ -191,7 +102,7 @@ Serial.println(a.flight_index);
 // ================================================================
 
 void loop() {
-    unsigned int time = 0;
+    unsigned long time = 0;
     time = micros();
 
     int c = 0;
@@ -200,7 +111,10 @@ void loop() {
 c = 0;
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt){// && fifoCount < packetSize) { //The fifocount thing here crashes the code after a while
-      c+=1;
+      //time = micros();
+      c+=1; //~1 us
+      //Serial.print(micros()-time);
+        //Serial.println(" <- time");
         // other program behavior stuff here
         // .
         // .
@@ -213,7 +127,8 @@ c = 0;
         // .
 
         // ULTRASONIC: send another ping if 50ms has passed since last
-        if (millis() >= pingTimer){
+
+        if (millis() >= pingTimer){ //4us if all false. 500us if trigger.
             if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
                 ultra_bot.ping_timer(echoCheck);
                 pingTimer += pingSpeed;
@@ -224,8 +139,9 @@ c = 0;
                 ULTRA_SELECT = 1;
             }
         }
+
     }
-Serial.print(c);
+//Serial.print(c);
 // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
 // check the mpuInt before each operation of non-critical things.
 // use flags and stuff for the ultrasonics (needs an Interrupt routine)
@@ -234,11 +150,11 @@ Serial.print(c);
 // motor and servo controls
 // write to sd
 // time each section
+
 update_imu();  //this function at the bottom of the file
 }
 
 int update_imu(){  //there are linker errors if I put this fn in a separate file
-
     // reset interrupt flag and get INT_STATUS byte
     mpuInterrupt = false;
     mpuIntStatus = mpu.getIntStatus();
@@ -265,27 +181,25 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
         fifoCount -= packetSize;
 
 
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &q);
-            mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            /*Serial.print("ypr\t");
-            Serial.print(ypr[0] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[1] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(ypr[2] * 180/M_PI);
-            Serial.print("\t cpu: ");
-            Serial.print(freeMemory());
-            */
-            Serial.print("\t UltraB: ");
-            Serial.print(a.dat.ult_b);
-            Serial.print("\t UltraR: ");
-            Serial.println(a.dat.ult_r);
+        // get quat, accel, and gy (raw values)
+        mpu.dmpGetQuaternion(&q, fifoBuffer);
+        mpu.dmpGetAccel(&aa, fifoBuffer);
+        mpu.dmpGetGyro(&gy, fifoBuffer);
 
-        // blink LED to indicate activity
-        blinkState = !blinkState;
-        digitalWrite(LED_PIN, blinkState);
+        //save the quaternion, accel, and gyr
+        a.dat.q = q;
+        a.dat.aa = aa;
+        a.dat.gy = gy;
+
+        mpu.dmpGetGravity(&gravity, &q);
+        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+        a.dat.ypr[0] = ypr[0];
+        a.dat.ypr[1] = ypr[1];
+        a.dat.ypr[2] = ypr[2];
+
+        //Serial.print("TIME: "); // Print a recorded delta time
+        //Serial.print(a.dat.dt); //
+        a.print_sensors(0x01); //eventually move this into main loop
     }
 }
 int initialize_imu(){
