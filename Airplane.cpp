@@ -11,6 +11,18 @@ Airplane::Airplane(){
   flight_index = 0;
     sensordata dat = {}; //initialize all data values to zero
 
+    servos[THROTTLE_ID].attach(THROTTLE_PIN);
+    servos[AIL_R_ID].attach(AIL_R_PIN);
+    servos[AIL_L_ID].attach(AIL_L_PIN);
+    servos[RUDDER_ID].attach(RUDDER_PIN);
+    servos[ELEVATOR_ID].attach(ELEVATOR_PIN);
+
+    for (int i = 0; i++; i<5){
+        servoPos[i] = 1500;
+        servoTime[i] = millis();
+        //servos[i].writeMicroseconds(1500);
+        servos[i].write(0);
+    }
   //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
   //NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
   //pingTimer = millis(); //start timer for ultrasonics
@@ -19,6 +31,31 @@ Airplane::Airplane(){
 void Airplane::outpt(){
 //    Serial.println("I'm here");
 }
+
+int Airplane::control(){
+    //This is the main control algorithm for the airplane. Call every cycle
+
+    servoPos[0] =90;
+    servoPos[1] =90;
+    servoPos[2] =120;
+    servoPos[3] =120;
+    servoPos[4] =0;
+
+}
+
+void Airplane::servo_set(){
+    //make sure more than 20ms has passed since last servo command
+    for(int i = 0; i++; i<5){
+        //if ((millis() > (servoTime[i] + SERVO_MAX_PULSE_RATE))  //check if 20ms
+        //     && servos[i].readMicroseconds() != servoPos[i])    //check if there was a change
+        //{
+            //servos[i].writeMicroseconds(servoPos[5]);
+            servos[i].write(servoPos[5]);
+            servoTime[i] = millis();
+        //}
+    }
+}
+
 
 
 void Airplane::print_sensors(uint8_t select){

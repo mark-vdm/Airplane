@@ -1,8 +1,10 @@
-//#include <Arduino.h>
-//#include "MemoryFree.h"
+/* ===========================================
+This code is based off of Jeff Rowberg's MPU6050 dmp example.
+It is modified for my personal helicoptor project (not finished yet).
+Author: Mark vandermeulen
 
-#include "all_sensors.h"
-
+==============================================
+*/
 /* ============================================
 I2Cdev device library code is placed under the MIT license
 Copyright (c) 2012 Jeff Rowberg
@@ -27,6 +29,7 @@ THE SOFTWARE.
 ===============================================
 */
 
+#include "all_sensors.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
 #endif
@@ -34,10 +37,8 @@ THE SOFTWARE.
 
 MPU6050 mpu;
 
-
-bool dmpReady = false;
-Airplane a;
-
+bool dmpReady = false;  // Flag for MPU6050
+Airplane a;             // Custom class
 
 // ================================================================
 // ===           INTERRUPT DETECTION ROUTINES MUST BE IN MAIN   ===
@@ -93,6 +94,8 @@ dmpReady = false;
     Serial.println(freeMemory());
 
     pingTimer = millis(); //this is used for ultrasonic sensors
+    //a.control();
+    a.servo_set();
 }
 
 
@@ -139,7 +142,13 @@ c = 0;
                 ULTRA_SELECT = 1;
             }
         }
+        //delay(100);
+        a.control();
+        a.servo_set();
+        for (int i = 0; i++;i<5)
+            a.servos[i].refresh();
 
+  SoftwareServo::refresh();
     }
 //Serial.print(c);
 // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
@@ -202,6 +211,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
         a.print_sensors(0x01); //eventually move this into main loop
     }
 }
+
 int initialize_imu(){
      // initialize device
     //Serial.println(F("Initializing I2C devices..."));

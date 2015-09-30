@@ -5,6 +5,40 @@
 #include <Arduino.h>
 #include "helper_3dmath.h"
 #include "MemoryFree.h"
+//#include "Servo.h"
+#include "SoftwareServo.h"
+
+// SERVO VALUES
+#define THROTTLE_PIN 1 //The pins for each servo control
+#define AIL_R_PIN A1
+#define AIL_L_PIN A0
+#define RUDDER_PIN A2
+#define ELEVATOR_PIN A3
+#define SERVO_MAX_PULSE_RATE 50 //the time between servo pulses (ms)
+
+#define THROTTLE_ID 0 //The index of 'servos' for each servo control
+#define AIL_R_ID   1
+#define AIL_L_ID   2
+#define RUDDER_ID  3
+#define ELEVATOR_ID 4
+
+// RECEIVER FUNCTIONS //
+//#include <PinChangeInt.h> - Cannot include this here. Compiler fails
+
+
+// These bit flags are set in bUpdateFlagsShared to indicate which
+// channels have new signals
+#define THROTTLE_FLAG 1
+#define ROLL_FLAG 2
+#define PITCH_FLAG 4
+#define YAW_FLAG 8
+#define MODE_FLAG 16
+
+
+
+// holds the update flags defined above
+//volatile uint8_t bUpdateFlagsShared;
+
 
 #ifdef SD_CARD_USED
 #include <SPI.h>
@@ -39,25 +73,14 @@ class Airplane{
 
         sensordata dat; //holds onto the raw sensor values
         void print_sensors(uint8_t select);
-/*
-        //Ultrasonic Functions/*
-        NewPing ultra_bot();
-        NewPing ultra_rear();
-        unsigned long pingTimer; //holds the next ping time
-        void ultraB_ping();
-        void ultraR_ping();
-        friend void echoCheck();*/
-        //send ping
-        //check distance from ISR
 
-        // SD CARD FUNCTIONS: DISABLED //
-        #ifdef SD_CARD_USED
-        File myFile;
-        //int init_SD(); //This does not work. Only works when in the main file
-        int index_log(); //get the index of the previous log FIN
-        int SD_newLog(); //create new log file
-        void SD_close(); //close current log file
-        #endif
+        //Servos
+        SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
+        int servoPos[5];
+        unsigned long servoTime[5]; //save the last time servo was set (ms)
+        int control();
+
+        void servo_set(); //makes sure to only update the servo every 10ms
 
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)

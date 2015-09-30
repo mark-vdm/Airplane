@@ -16,7 +16,9 @@
 #include "NewPing.h"
 //#include "DMP.h"
 
-
+//Pin change interrupts
+#include "PinChangeInt.h"
+volatile uint8_t bUpdateFlagsShared;
 
 
 // ULTRASONIC SENSORS //
