@@ -17,15 +17,15 @@
 //#include "DMP.h"
 
 //Pin change interrupts
-#include "PinChangeInt.h"
+#include <PinChangeInt.h>
 volatile uint8_t bUpdateFlagsShared;
 
 
 // ULTRASONIC SENSORS //
-#define TRIGGER_PIN 8 //arduino pin on trigger
-#define ECHO_PIN 8 //Arduino pin to echo
-#define TRIGGER_PINR 9 //arduino pin on trigger
-#define ECHO_PINR 9 //Arduino pin to echo
+#define TRIGGER_PIN 9 //arduino pin on trigger
+#define ECHO_PIN 9 //Arduino pin to echo
+#define TRIGGER_PINR 10 //arduino pin on trigger
+#define ECHO_PINR 10 //Arduino pin to echo
 #define MAX_DISTANCE 300 //Maximum distance for ping (cm)
 
 

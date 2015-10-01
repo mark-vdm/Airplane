@@ -5,8 +5,8 @@
 #include <Arduino.h>
 #include "helper_3dmath.h"
 #include "MemoryFree.h"
-//#include "Servo.h"
-#include "SoftwareServo.h"
+#include "Servo.h"
+//#include "SoftwareServo.h"
 
 // SERVO VALUES
 #define THROTTLE_PIN 1 //The pins for each servo control
@@ -73,14 +73,15 @@ class Airplane{
 
         sensordata dat; //holds onto the raw sensor values
         void print_sensors(uint8_t select);
-
+ int control();
         //Servos
-        SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
-        int servoPos[5];
-        unsigned long servoTime[5]; //save the last time servo was set (ms)
-        int control();
+        //SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
+        //Servo servos[5]; // throttle, ail_l, ail_r, rud, elevator
 
-        void servo_set(); //makes sure to only update the servo every 10ms
+        int servoPos[5];
+        //unsigned long servoTime[5]; //save the last time servo was set (ms)
+
+//        void servo_set(); //makes sure to only update the servo every 10ms
 
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)

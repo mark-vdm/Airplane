@@ -79,14 +79,15 @@ dmpReady = false;
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
-
+a.control();
+//    a.servo_set();
     // initialize serial communication
     Serial.begin(115200);
-    while (!Serial); // wait for Leonardo enumeration, others continue immediately
-
+    //while (!Serial); // wait for Leonardo enumeration, others continue immediately
+delay(100);
     initialize_imu();
-    delay(100);
 
+delay(100);
     // configure LED for output
     pinMode(LED_PIN, OUTPUT);
 
@@ -94,8 +95,7 @@ dmpReady = false;
     Serial.println(freeMemory());
 
     pingTimer = millis(); //this is used for ultrasonic sensors
-    //a.control();
-    a.servo_set();
+    //
 }
 
 
@@ -144,11 +144,11 @@ c = 0;
         }
         //delay(100);
         a.control();
-        a.servo_set();
-        for (int i = 0; i++;i<5)
-            a.servos[i].refresh();
+//        a.servo_set();
+        //for (int i = 0; i++;i<5)
+        //    a.servos[i].refresh();
 
-  SoftwareServo::refresh();
+  //SoftwareServo::refresh();
     }
 //Serial.print(c);
 // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
@@ -208,7 +208,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x01); //eventually move this into main loop
+        a.print_sensors(0x09); //eventually move this into main loop
     }
 }
 
@@ -223,9 +223,9 @@ int initialize_imu(){
 
     // wait for ready
     Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    while (Serial.available() && Serial.read()); // empty buffer
-    while (!Serial.available());                 // wait for data
-    while (Serial.available() && Serial.read()); // empty buffer again
+//    while (Serial.available() && Serial.read()); // empty buffer
+//    while (!Serial.available());                 // wait for data
+//    while (Serial.available() && Serial.read()); // empty buffer again
 
     // load and configure the DMP
 //    Serial.println(F("Initializing DMP..."));
