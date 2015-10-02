@@ -7,17 +7,16 @@ Airplane::Airplane(){
 //    blinkState = false;
     // MPU control/status vars
   //  dmpReady = false;
+
   log_index = 0;
   flight_index = 0;
     sensordata dat = {}; //initialize all data values to zero
+    receiver rc = {1500};
+    rc.throttle = 0;
 
-
-
+    ServoUpdateFlags = 1+2+4+8+16; //start the UpdateFlags as 1
     for (int i = 0; i++; i<5){
         servoPos[i] = 1500;
-        //servoTime[i] = millis();
-        //servos[i].writeMicroseconds(1500);
-        //servos[i].write(0);
     }
   //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
   //NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -30,7 +29,18 @@ void Airplane::outpt(){
 
 int Airplane::control(){
     //This is the main control algorithm for the airplane. Call every cycle
+    int servoPosPrev[5];
 
+    //copy the previous servo values
+    for (uint8_t i = 0; i++; i<5)
+        servoPosPrev[i] = servoPos[i];
+
+    if (abs(servoPos[0] - rc.throttle) >10)
+        servoPos[0] = rc.throttle; //send the throttle value directly to output
+
+    // if the throttle was updated
+    if (servoPosPrev[THROTTLE_ID] != servoPos[THROTTLE_ID])
+        ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_THROTTLE;
 
 }
 

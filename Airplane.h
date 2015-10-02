@@ -5,50 +5,22 @@
 #include <Arduino.h>
 #include "helper_3dmath.h"
 #include "MemoryFree.h"
-#include "Servo.h"
-//#include "SoftwareServo.h"
 
-// SERVO VALUES
-#define THROTTLE_PIN 1 //The pins for each servo control
-#define AIL_R_PIN A1
-#define AIL_L_PIN A0
-#define RUDDER_PIN A2
-#define ELEVATOR_PIN A3
-#define SERVO_MAX_PULSE_RATE 50 //the time between servo pulses (ms)
+// Flags to indicate when a servo position should be updated
+#define SERVO_FLAG_THROTTLE 1
+#define SERVO_FLAG_R 2
+#define SERVO_FLAG_L 4
+#define SERVO_FLAG_RUD 8
+#define SERVO_FLAG_ELEV 16
+extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main file
+
 
 #define THROTTLE_ID 0 //The index of 'servos' for each servo control
 #define AIL_R_ID   1
 #define AIL_L_ID   2
 #define RUDDER_ID  3
 #define ELEVATOR_ID 4
-
-// RECEIVER FUNCTIONS //
-//#include <PinChangeInt.h> - Cannot include this here. Compiler fails
-
-
-// These bit flags are set in bUpdateFlagsShared to indicate which
-// channels have new signals
-#define THROTTLE_FLAG 1
-#define ROLL_FLAG 2
-#define PITCH_FLAG 4
-#define YAW_FLAG 8
-#define MODE_FLAG 16
-
-
-
-// holds the update flags defined above
-//volatile uint8_t bUpdateFlagsShared;
-
-
-#ifdef SD_CARD_USED
-#include <SPI.h>
-#include <SD.h>
-//#include <SdFat.h>
-//extern SdFat SD;
-//#include <string.h>
-const uint8_t chipSelect = 10;
-#endif
-
+#define SERVO_FRAME_SPACE 5
 
 
 // MARK'S PROGRAM VARIABLES AND STUFF
@@ -65,6 +37,13 @@ struct sensordata{
     uint8_t ult_r;
     unsigned long dt;
 };
+struct receiver{ //stores the values from the receiver
+    int throttle;
+    int yaw;
+    int pitch;
+    int roll;
+    int mode;
+};
 
 class Airplane{
     public:
@@ -72,6 +51,7 @@ class Airplane{
         void outpt();
 
         sensordata dat; //holds onto the raw sensor values
+        receiver rc;    //holds onto the raw receiver values
         void print_sensors(uint8_t select);
  int control();
         //Servos

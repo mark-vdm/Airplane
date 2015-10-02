@@ -37,6 +37,10 @@ THE SOFTWARE.
 
 MPU6050 mpu;
 
+
+//Flag for updating servos. This is used in this file and Airplane.cpp
+volatile uint8_t ServoUpdateFlags; //Should be volatile b/c it's used in 2 separate files
+
 bool dmpReady = false;  // Flag for MPU6050
 Airplane a;             // Custom class
 
@@ -64,6 +68,21 @@ void echoCheck_r() { // Timer2 interrupt calls this function every 24uS where yo
        a.dat.ult_r = ultra_rear.ping_result / US_ROUNDTRIP_CM;
   }
 }
+
+// simple interrupt service routine for RECEIVER
+void calcThrottle()
+{
+  if(PCintPort::pinState)
+  {
+    unThrottleInStart = TCNT1;
+  }
+  else
+  {
+    unThrottleInShared = (TCNT1 - unThrottleInStart)>>1;
+    bUpdateFlagsShared |= THROTTLE_FLAG;
+  }
+}
+
 
 
 // ================================================================
@@ -96,6 +115,18 @@ delay(100);
 
     pingTimer = millis(); //this is used for ultrasonic sensors
     //
+
+    /////////////// Initialize SERVOS and RECEIVER //////////////////////
+    // attach servo objects, these will generate the correct
+    // pulses for driving Electronic speed controllers, servos or other devices
+    // designed to interface directly with RC Receivers
+    CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN);
+    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 3 Servos + 7 times 2000
+    CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,7*2000);
+    CRCArduinoFastServos::begin();
+    // using the PinChangeInt library, attach the interrupts
+    // used to read the channels
+    PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle,CHANGE);
 }
 
 
@@ -143,7 +174,9 @@ c = 0;
             }
         }
         //delay(100);
+        update_receiver();
         a.control();
+        update_servos();
 //        a.servo_set();
         //for (int i = 0; i++;i<5)
         //    a.servos[i].refresh();
@@ -266,45 +299,61 @@ int initialize_imu(){
 
 }
 
-#ifdef SD_CARD_USED
-int initialize_SD(){  //Mysterious failure when this function is in a different file
-       // == SD CARD INIT == //
-    Serial.print("Initializing SD card...");
-    pinMode(SS, OUTPUT);
-    if (!SD.begin(10)) {
-        Serial.println("initialization failed!");
-        return 1;
-    }
-    //Serial.println("SD initialization done.");
+// Must be here because it deals with interrupts?
+void update_receiver(){
+    // create local variables to hold a local copies of the channel inputs
+  // these are declared static so that thier values will be retained
+  // between calls to loop.
+  static uint16_t unThrottleIn;
+  static uint16_t unSteeringIn;
+  static uint16_t unAuxIn;
+  // local copy of update flags
+  static uint8_t bUpdateFlags;
 
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  a.myFile = SD.open("datalog/test2.txt", FILE_WRITE);
-    // if the file opened okay, write to it:
-  if (a.myFile) {
-    Serial.print("Writing to test2.txt...");
-    a.myFile.println("testing 1, 2, 3.");
-	// close the file:
-    a.myFile.close();
-    //Serial.println("done.");
-  } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
-  }
-  // re-open the file for reading:
-  a.myFile = SD.open("datalog/test2.txt");
-  if (a.myFile) {
-    Serial.println("test2.txt:");
+  // check shared update flags to see if any channels have a new signal
+  if(bUpdateFlagsShared)
+  {
+    noInterrupts(); // turn interrupts off quickly while we take local copies of the shared variables
 
-    // read from the file until there's nothing else in it:
-    while (a.myFile.available()) {
-    	Serial.write(a.myFile.read());
+    // take a local copy of which channels were updated in case we need to use this in the rest of loop
+    bUpdateFlags = bUpdateFlagsShared;
+
+    // in the current code, the shared values are always populated
+    // so we could copy them without testing the flags
+    // however in the future this could change, so lets
+    // only copy when the flags tell us we can.
+
+    if(bUpdateFlags & THROTTLE_FLAG)
+    {
+      a.rc.throttle = unThrottleInShared;
     }
-    // close the file:
-    a.myFile.close();
-  } else {
-  	// if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
+/*
+    if(bUpdateFlags & STEERING_FLAG)
+    {
+      unSteeringIn = unSteeringInShared;
+    }
+
+    if(bUpdateFlags & AUX_FLAG)
+    {
+      unAuxIn = unAuxInShared;
+    }*/
+
+    // clear shared copy of updated flags as we have already taken the updates
+    // we still have a local copy if we need to use it in bUpdateFlags
+    bUpdateFlagsShared = 0;
+
+    interrupts(); // we have local copies of the inputs, so now we can turn interrupts back on
+    // as soon as interrupts are back on, we can no longer use the shared copies, the interrupt
+    // service routines own these and could update them at any time. During the update, the
+    // shared copies may contain junk. Luckily we have our local copies to work with :-)
   }
 }
-#endif
+
+// Linker errors if RCArduinoFastServos is in a separate file. Must be placed here.
+void update_servos(){
+  if(ServoUpdateFlags & SERVO_FLAG_THROTTLE)
+  {
+    CRCArduinoFastServos::writeMicroseconds(THROTTLE_ID,a.servoPos[THROTTLE_ID]);//servoPos[THROTTLE_ID]);
+  }
+  ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_THROTTLE); //clear the throttle flag to show it was updated
+}

@@ -16,10 +16,82 @@
 #include "NewPing.h"
 //#include "DMP.h"
 
+
+//// SERVOS AND RECEIVER //////////////////////////////////////
+// Flags to indicate when a servo position should be updated
+//extern volatile uint8_t ServoUpdateFlags;
+
+
+
 //Pin change interrupts
 #include <PinChangeInt.h>
+#include "RCArduinoFastLib.h"
 volatile uint8_t bUpdateFlagsShared;
 
+
+// SERVO VALUES
+#define THROTTLE_IN_PIN 3 //The pins for each servo control
+#define ROLL_IN_PIN 4
+#define PITCH_IN_PIN 5
+#define YAW_IN_PIN 6
+#define MODE_IN_PIN 7
+
+// Assign your channel out pins
+#define THROTTLE_OUT_PIN 8
+#define AIL_L_OUT_PIN A0
+#define AIL_R_OUT_PIN A1
+#define RUDDER_OUT_PIN A2
+#define ELEVATOR_OUT_PIN A3
+
+
+#define THROTTLE_ID 0 //The index of 'servos' for each servo control
+#define AIL_R_ID   1
+#define AIL_L_ID   2
+#define RUDDER_ID  3
+#define ELEVATOR_ID 4
+#define SERVO_FRAME_SPACE 5
+
+
+// These bit flags are set in bUpdateFlagsShared to indicate which
+// channels have new signals
+#define THROTTLE_FLAG 1
+#define ROLL_FLAG 2
+#define PITCH_FLAG 4
+#define YAW_FLAG 8
+#define MODE_FLAG 16
+
+// The flags to indicate when the servos get new signals are in AIRPLANE.H
+
+// shared variables are updated by the ISR and read by loop.
+// In loop we immediatley take local copies so that the ISR can keep ownership of the
+// shared ones. To access these in loop
+// we first turn interrupts off with noInterrupts
+// we take a copy to use in loop and the turn interrupts back on
+// as quickly as possible, this ensures that we are always able to receive new signals
+volatile uint16_t unThrottleInShared;
+//volatile uint16_t unSteeringInShared;
+//volatile uint16_t unAuxInShared;
+
+// These are used to record the rising edge of a pulse in the calcInput functions
+// They do not need to be volatile as they are only used in the ISR. If we wanted
+// to refer to these in loop and the ISR then they would need to be declared volatile
+uint16_t unThrottleInStart;
+//uint16_t unSteeringInStart;
+//uint16_t unAuxInStart;
+
+//uint16_t unLastAuxIn = 0;
+uint32_t ulVariance = 0;
+uint32_t ulGetNextSampleMillis = 0;
+uint16_t unMaxDifference = 0;
+
+void calcThrottle();
+//void calcSteering();
+//void calcAux();
+void update_receiver(); //updates values from receiver
+void update_servos();   //updates output to servo
+
+
+/////////////////////////////////////////////////////////////////////////////
 
 // ULTRASONIC SENSORS //
 #define TRIGGER_PIN 9 //arduino pin on trigger
@@ -28,8 +100,7 @@ volatile uint8_t bUpdateFlagsShared;
 #define ECHO_PINR 10 //Arduino pin to echo
 #define MAX_DISTANCE 300 //Maximum distance for ping (cm)
 
-
-
+///////////////////////////////////////////////////////////////////
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
