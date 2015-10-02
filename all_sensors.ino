@@ -105,6 +105,44 @@ void calcYaw()
     bUpdateFlagsShared |= YAW_FLAG;
   }
 }
+void calcPitch()
+{
+  if(PCintPort::pinState)
+  {
+    unPitchInStart = TCNT1;
+  }
+  else
+  {
+    unPitchInShared = (TCNT1 - unPitchInStart)>>1;
+    bUpdateFlagsShared |= PITCH_FLAG;
+  }
+}
+void calcRoll()
+{
+  if(PCintPort::pinState)
+  {
+    unRollInStart = TCNT1;
+  }
+  else
+  {
+    unRollInShared = (TCNT1 - unRollInStart)>>1;
+    bUpdateFlagsShared |= ROLL_FLAG;
+  }
+}
+void calcMode()
+{
+  if(PCintPort::pinState)
+  {
+    unModeInStart = TCNT1;
+  }
+  else
+  {
+    unModeInShared = (TCNT1 - unModeInStart)>>1;
+    bUpdateFlagsShared |= MODE_FLAG;
+  }
+}
+
+
 
 
 
@@ -147,6 +185,7 @@ delay(100);
     CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //rudder servo
     CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //rudder servo
     CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //rudder servo
 
     // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 3 Servos + 7 times 2000
     CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,7*2000);
@@ -155,6 +194,9 @@ delay(100);
     // used to read the channels
     PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle,CHANGE);
     PCintPort::attachInterrupt(YAW_IN_PIN, calcYaw,CHANGE);
+    PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch,CHANGE);
+    PCintPort::attachInterrupt(ROLL_IN_PIN, calcRoll,CHANGE);
+    PCintPort::attachInterrupt(MODE_IN_PIN, calcMode,CHANGE);
 }
 
 
@@ -354,12 +396,18 @@ void update_receiver(){
     {
       a.rc.yaw = unYawInShared;
     }
-/*
-    if(bUpdateFlags & AUX_FLAG)
+    if(bUpdateFlags & PITCH_FLAG)
     {
-      unAuxIn = unAuxInShared;
-    }*/
-
+      a.rc.pitch = unPitchInShared;
+    }
+    if(bUpdateFlags & ROLL_FLAG)
+    {
+      a.rc.roll = unRollInShared;
+    }
+    if(bUpdateFlags & MODE_FLAG)
+    {
+      a.rc.mode = unModeInShared;
+    }
     // clear shared copy of updated flags as we have already taken the updates
     // we still have a local copy if we need to use it in bUpdateFlags
     bUpdateFlagsShared = 0;
@@ -382,7 +430,20 @@ void update_servos(){
   {
       CRCArduinoFastServos::writeMicroseconds(RUDDER_ID,a.servoPos[RUDDER_ID]); //
       ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_RUD); //clear the rudder update flag
-
   }
-
+  if(ServoUpdateFlags & SERVO_FLAG_ELEV)
+  {
+      CRCArduinoFastServos::writeMicroseconds(ELEVATOR_ID,a.servoPos[ELEVATOR_ID]); //
+      ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_ELEV); //clear the rudder update flag
+  }
+  if(ServoUpdateFlags & SERVO_FLAG_R)
+  {
+      CRCArduinoFastServos::writeMicroseconds(AIL_R_ID,a.servoPos[AIL_R_ID]); //
+      ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_R); //clear the rudder update flag
+  }
+  if(ServoUpdateFlags & SERVO_FLAG_L)
+  {
+      CRCArduinoFastServos::writeMicroseconds(AIL_L_ID,a.servoPos[AIL_L_ID]); //
+      ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_L); //clear the rudder update flag
+  }
 }

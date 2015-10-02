@@ -70,6 +70,9 @@ volatile uint8_t bUpdateFlagsShared;
 // as quickly as possible, this ensures that we are always able to receive new signals
 volatile uint16_t unThrottleInShared;
 volatile uint16_t unYawInShared;
+volatile uint16_t unPitchInShared;
+volatile uint16_t unRollInShared;
+volatile uint16_t unModeInShared;
 //volatile uint16_t unAuxInShared;
 
 // These are used to record the rising edge of a pulse in the calcInput functions
@@ -77,6 +80,9 @@ volatile uint16_t unYawInShared;
 // to refer to these in loop and the ISR then they would need to be declared volatile
 uint16_t unThrottleInStart;
 uint16_t unYawInStart;
+uint16_t unPitchInStart;
+uint16_t unRollInStart;
+uint16_t unModeInStart;
 //uint16_t unAuxInStart;
 
 //uint16_t unLastAuxIn = 0;

@@ -35,10 +35,13 @@ int Airplane::control(){
     for (uint8_t i = 0; i++; i<5)
         servoPosPrev[i] = servoPos[i];
 
-    if (abs(servoPos[THROTTLE_ID] - rc.throttle) >10)
-        servoPos[THROTTLE_ID] = rc.throttle; //send the throttle value directly to output
+    //Set new positions for the servos
+    //if (abs(servoPos[THROTTLE_ID] - rc.throttle) >10)
+    servoPos[THROTTLE_ID] = rc.throttle; //send the throttle value directly to output
     servoPos[RUDDER_ID] = rc.yaw;
-
+    servoPos[ELEVATOR_ID] = rc.pitch;
+    servoPos[AIL_L_ID] = rc.roll;
+    servoPos[AIL_R_ID] = 3000 - rc.roll;
 
 
     // if any servo value was updated, set the update flag to 1
@@ -46,6 +49,12 @@ int Airplane::control(){
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_THROTTLE;
     if (servoPosPrev[RUDDER_ID] != servoPos[RUDDER_ID])
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_RUD;
+    if (servoPosPrev[ELEVATOR_ID] != servoPos[ELEVATOR_ID])
+        ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_ELEV;
+    if (servoPosPrev[AIL_L_ID] != servoPos[AIL_L_ID])
+        ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_L;
+    if (servoPosPrev[AIL_R_ID] != servoPos[AIL_R_ID])
+        ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_R;
 }
 
 /*void Airplane::servo_set(){
@@ -116,6 +125,12 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(rc.throttle);
             Serial.print("\t y:");
             Serial.print(rc.yaw);
+            Serial.print("\t p:");
+            Serial.print(rc.pitch);
+            Serial.print("\t r:");
+            Serial.print(rc.roll);
+            Serial.print("\t m:");
+            Serial.print(rc.mode);
         }
         Serial.println("");
     }
