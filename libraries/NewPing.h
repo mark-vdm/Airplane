@@ -145,8 +145,9 @@ class NewPing {
 		static void timer_us(unsigned int frequency, void (*userFunc)(void));
 		static void timer_ms(unsigned long frequency, void (*userFunc)(void));
 		static void timer_stop();
-	private:
 		boolean ping_trigger();
+	private:
+
 		boolean ping_wait_timer();
 		uint8_t _triggerBit;
 		uint8_t _echoBit;

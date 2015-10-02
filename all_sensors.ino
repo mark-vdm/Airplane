@@ -29,6 +29,13 @@ THE SOFTWARE.
 ===============================================
 */
 
+/*==============================================
+HARDWARE FIXES:
+Ultrasonic: Add a 2.2k R between trig and echo for 1-pin operation. Add a 0.1uF cap in series seems to help.
+================================================
+*/
+
+
 #include "all_sensors.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
@@ -69,6 +76,10 @@ void echoCheck_r() { // Timer2 interrupt calls this function every 24uS where yo
   }
 }
 
+void echoCheck_pin_interrupt(){
+
+}
+
 // simple interrupt service routine for RECEIVER
 void calcThrottle()
 {
@@ -80,6 +91,18 @@ void calcThrottle()
   {
     unThrottleInShared = (TCNT1 - unThrottleInStart)>>1;
     bUpdateFlagsShared |= THROTTLE_FLAG;
+  }
+}
+void calcYaw()
+{
+  if(PCintPort::pinState)
+  {
+    unYawInStart = TCNT1;
+  }
+  else
+  {
+    unYawInShared = (TCNT1 - unYawInStart)>>1;
+    bUpdateFlagsShared |= YAW_FLAG;
   }
 }
 
@@ -120,13 +143,18 @@ delay(100);
     // attach servo objects, these will generate the correct
     // pulses for driving Electronic speed controllers, servos or other devices
     // designed to interface directly with RC Receivers
-    CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN);
+    CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN); //throttle servo
+    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
+
     // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 3 Servos + 7 times 2000
     CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,7*2000);
     CRCArduinoFastServos::begin();
     // using the PinChangeInt library, attach the interrupts
     // used to read the channels
     PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle,CHANGE);
+    PCintPort::attachInterrupt(YAW_IN_PIN, calcYaw,CHANGE);
 }
 
 
@@ -146,19 +174,8 @@ c = 0;
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt){// && fifoCount < packetSize) { //The fifocount thing here crashes the code after a while
       //time = micros();
-      c+=1; //~1 us
       //Serial.print(micros()-time);
         //Serial.println(" <- time");
-        // other program behavior stuff here
-        // .
-        // .
-        // .
-        // if you are really paranoid you can frequently test in between other
-        // stuff to see if mpuInterrupt is true, and if so, "break;" from the
-        // while() loop to immediately process the MPU data
-        // .
-        // .
-        // .
 
         // ULTRASONIC: send another ping if 50ms has passed since last
 
@@ -173,16 +190,21 @@ c = 0;
                 ULTRA_SELECT = 1;
             }
         }
+
+        //check if the ultrasonics see nothing
+        if (!ultra_bot.ping_result){
+            a.dat.ult_b = 0;
+        }
+        if (!ultra_rear.ping_result){
+            a.dat.ult_r = 0;
+        }
+
         //delay(100);
         update_receiver();
         a.control();
         update_servos();
-//        a.servo_set();
-        //for (int i = 0; i++;i<5)
-        //    a.servos[i].refresh();
 
-  //SoftwareServo::refresh();
-    }
+}
 //Serial.print(c);
 // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
 // check the mpuInt before each operation of non-critical things.
@@ -241,7 +263,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x09); //eventually move this into main loop
+        a.print_sensors(0x21); //eventually move this into main loop
     }
 }
 
@@ -327,12 +349,12 @@ void update_receiver(){
     {
       a.rc.throttle = unThrottleInShared;
     }
-/*
-    if(bUpdateFlags & STEERING_FLAG)
-    {
-      unSteeringIn = unSteeringInShared;
-    }
 
+    if(bUpdateFlags & YAW_FLAG)
+    {
+      a.rc.yaw = unYawInShared;
+    }
+/*
     if(bUpdateFlags & AUX_FLAG)
     {
       unAuxIn = unAuxInShared;
@@ -354,6 +376,13 @@ void update_servos(){
   if(ServoUpdateFlags & SERVO_FLAG_THROTTLE)
   {
     CRCArduinoFastServos::writeMicroseconds(THROTTLE_ID,a.servoPos[THROTTLE_ID]);//servoPos[THROTTLE_ID]);
+    ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_THROTTLE); //clear the throttle flag to show it was updated
   }
-  ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_THROTTLE); //clear the throttle flag to show it was updated
+  if(ServoUpdateFlags & SERVO_FLAG_RUD)
+  {
+      CRCArduinoFastServos::writeMicroseconds(RUDDER_ID,a.servoPos[RUDDER_ID]); //
+      ServoUpdateFlags = ServoUpdateFlags & (~SERVO_FLAG_RUD); //clear the rudder update flag
+
+  }
+
 }

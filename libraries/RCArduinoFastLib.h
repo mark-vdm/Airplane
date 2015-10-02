@@ -26,7 +26,7 @@
 // for 50 hz, the pause should be to (20,000 - (RC_CHANNEL_OUT_COUNT * 2000))
 
 // Change to set the number of servos/ESCs
-#define RC_CHANNEL_OUT_COUNT 2
+#define RC_CHANNEL_OUT_COUNT 5
 
 #if defined (MORE_SERVOS_PLEASE)
 #define RCARDUINO_MAX_SERVOS (RC_CHANNEL_OUT_COUNT*2)
@@ -139,7 +139,7 @@ class CRCArduinoFastServos
 };
 
 // Change to set the number of channels in PPM Input stream
-#define RC_CHANNEL_IN_COUNT 2
+#define RC_CHANNEL_IN_COUNT 3
 // two ticks per us, 3000 us * 2 ticks = 6000 minimum frame space
 #define MINIMUM_FRAME_SPACE 6000
 #define MAXIMUM_PULSE_SPACE 5000

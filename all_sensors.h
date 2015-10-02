@@ -69,14 +69,14 @@ volatile uint8_t bUpdateFlagsShared;
 // we take a copy to use in loop and the turn interrupts back on
 // as quickly as possible, this ensures that we are always able to receive new signals
 volatile uint16_t unThrottleInShared;
-//volatile uint16_t unSteeringInShared;
+volatile uint16_t unYawInShared;
 //volatile uint16_t unAuxInShared;
 
 // These are used to record the rising edge of a pulse in the calcInput functions
 // They do not need to be volatile as they are only used in the ISR. If we wanted
 // to refer to these in loop and the ISR then they would need to be declared volatile
 uint16_t unThrottleInStart;
-//uint16_t unSteeringInStart;
+uint16_t unYawInStart;
 //uint16_t unAuxInStart;
 
 //uint16_t unLastAuxIn = 0;
@@ -85,7 +85,7 @@ uint32_t ulGetNextSampleMillis = 0;
 uint16_t unMaxDifference = 0;
 
 void calcThrottle();
-//void calcSteering();
+void calcYaw();
 //void calcAux();
 void update_receiver(); //updates values from receiver
 void update_servos();   //updates output to servo
@@ -98,7 +98,7 @@ void update_servos();   //updates output to servo
 #define ECHO_PIN 9 //Arduino pin to echo
 #define TRIGGER_PINR 10 //arduino pin on trigger
 #define ECHO_PINR 10 //Arduino pin to echo
-#define MAX_DISTANCE 300 //Maximum distance for ping (cm)
+#define MAX_DISTANCE 200 //Maximum distance for ping (cm)
 
 ///////////////////////////////////////////////////////////////////
 

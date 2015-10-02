@@ -674,10 +674,8 @@
 		<Unit filename="libraries/NewPing.cpp" />
 		<Unit filename="libraries/NewPing.h" />
 		<Unit filename="libraries/PinChangeInt.h" />
-		<Unit filename="libraries/Servo.cpp" />
-		<Unit filename="libraries/Servo.h" />
-		<Unit filename="libraries/SoftwareServo.cpp" />
-		<Unit filename="libraries/SoftwareServo.h" />
+		<Unit filename="libraries/RCArduinoFastLib.cpp" />
+		<Unit filename="libraries/RCArduinoFastLib.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
