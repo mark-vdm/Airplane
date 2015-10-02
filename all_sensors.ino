@@ -177,6 +177,7 @@ delay(100);
     pingTimer = millis(); //this is used for ultrasonic sensors
     //
 
+
     /////////////// Initialize SERVOS and RECEIVER //////////////////////
     // attach servo objects, these will generate the correct
     // pulses for driving Electronic speed controllers, servos or other devices

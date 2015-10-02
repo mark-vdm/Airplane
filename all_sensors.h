@@ -43,7 +43,6 @@ volatile uint8_t bUpdateFlagsShared;
 #define RUDDER_OUT_PIN A2
 #define ELEVATOR_OUT_PIN A3
 
-
 #define THROTTLE_ID 0 //The index of 'servos' for each servo control
 #define AIL_R_ID   1
 #define AIL_L_ID   2
