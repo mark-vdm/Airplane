@@ -32,6 +32,7 @@ THE SOFTWARE.
 /*==============================================
 HARDWARE FIXES:
 Ultrasonic: Add a 2.2k R between trig and echo for 1-pin operation. Add a 0.1uF cap in series seems to help.
+            Pin D10 (ult_rear) seems to work a bit better than D9 (ult_bottom).
 ================================================
 */
 
@@ -74,10 +75,6 @@ void echoCheck_r() { // Timer2 interrupt calls this function every 24uS where yo
   if (ultra_rear.check_timer()) { // This is how you check to see if the ping was received.
        a.dat.ult_r = ultra_rear.ping_result / US_ROUNDTRIP_CM;
   }
-}
-
-void echoCheck_pin_interrupt(){
-
 }
 
 // simple interrupt service routine for RECEIVER
@@ -175,21 +172,25 @@ delay(100);
     Serial.println(freeMemory());
 
     pingTimer = millis(); //this is used for ultrasonic sensors
-    //
-
 
     /////////////// Initialize SERVOS and RECEIVER //////////////////////
     // attach servo objects, these will generate the correct
     // pulses for driving Electronic speed controllers, servos or other devices
     // designed to interface directly with RC Receivers
     CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN); //throttle servo
-    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //rudder servo
-    CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //aileron servo
+    CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //aileron servo
     CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
-    CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //elevator servo
 
-    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 3 Servos + 7 times 2000
-    CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,7*2000);
+    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 4 Servos + 6 times 2000
+    CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,12000); //20000 - 4servos*2000 = 12000 // 50Hz
+    //For bank B, we need the same number of channels as bank A (4 SERVO + 1 frame)channels. Since we only have ESC,
+    //bank B will have (1 ESC + 4 frame)channels.
+    CRCArduinoFastServos::setFrameSpaceB(1,1*2000); // Frame space for bank B (4 blank channels so total is 5)
+    CRCArduinoFastServos::setFrameSpaceB(2,1*2000);
+    CRCArduinoFastServos::setFrameSpaceB(3,1*2000);
+    CRCArduinoFastServos::setFrameSpaceB(4,5*2000);
     CRCArduinoFastServos::begin();
     // using the PinChangeInt library, attach the interrupts
     // used to read the channels

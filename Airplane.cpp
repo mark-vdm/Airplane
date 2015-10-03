@@ -15,7 +15,7 @@ Airplane::Airplane(){
     rc.throttle = 1000;
 
     ServoUpdateFlags = 1+2+4+8+16; //start the UpdateFlags as 1
-    for (int i = 0; i++; i<5){
+    for (int i = 0; i++; i<6){
         servoPos[i] = 1500;
     }
   //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);

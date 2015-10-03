@@ -14,14 +14,13 @@
 #define SERVO_FLAG_ELEV 16
 extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main file
 
-
-#define THROTTLE_ID 0 //The index of 'servos' for each servo control
-#define AIL_R_ID   1
-#define AIL_L_ID   2
-#define RUDDER_ID  3
-#define ELEVATOR_ID 4
-#define SERVO_FRAME_SPACE 5
-
+#define THROTTLE_ID 5 //The index of 'servos' for each servo control
+#define AIL_R_ID   0
+#define AIL_L_ID   1
+#define RUDDER_ID  2
+#define ELEVATOR_ID 3
+#define SERVO_FRAME_SPACE 4
+#define SERVO_FRAME_SPACE2 6
 
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
@@ -58,7 +57,7 @@ class Airplane{
         //SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
         //Servo servos[5]; // throttle, ail_l, ail_r, rud, elevator
 
-        int servoPos[5];
+        int servoPos[6];
         //unsigned long servoTime[5]; //save the last time servo was set (ms)
 
 //        void servo_set(); //makes sure to only update the servo every 10ms

@@ -40,15 +40,16 @@ volatile uint8_t bUpdateFlagsShared;
 #define THROTTLE_OUT_PIN 8
 #define AIL_L_OUT_PIN A0
 #define AIL_R_OUT_PIN A1
-#define RUDDER_OUT_PIN A2
-#define ELEVATOR_OUT_PIN A3
+#define RUDDER_OUT_PIN A3
+#define ELEVATOR_OUT_PIN A2
 
-#define THROTTLE_ID 0 //The index of 'servos' for each servo control
-#define AIL_R_ID   1
-#define AIL_L_ID   2
-#define RUDDER_ID  3
-#define ELEVATOR_ID 4
-#define SERVO_FRAME_SPACE 5
+#define THROTTLE_ID 5 //The index of 'servos' for each servo control
+#define AIL_R_ID   0
+#define AIL_L_ID   1
+#define RUDDER_ID  2
+#define ELEVATOR_ID 3
+#define SERVO_FRAME_SPACE 4
+#define SERVO_FRAME_SPACE2 1
 
 
 // These bit flags are set in bUpdateFlagsShared to indicate which
