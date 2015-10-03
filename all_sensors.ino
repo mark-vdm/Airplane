@@ -33,6 +33,15 @@ THE SOFTWARE.
 HARDWARE FIXES:
 Ultrasonic: Add a 2.2k R between trig and echo for 1-pin operation. Add a 0.1uF cap in series seems to help.
             Pin D10 (ult_rear) seems to work a bit better than D9 (ult_bottom).
+
+SOFTWARE FIXES:
+RCArduinoFastLib: RC_CHANNEL_OUT_COUNT = #of servos on bank + 1 for the frame = 4+1 = 5
+                  attach(ch,pin#). Use ch 0,1,2,3 for servos.
+                  Set frame: use setFrameSpaceA(ch,us) to make the total update rate to 50Hz for servos
+                  For 2nd bank of servos: when using attach, set the ESC ID = RC_CHANNEL_OUT_COUNT = 5.
+                    This makes the ESC as channel 0 on bank B.
+                    Then you must add 4 blank channels to bank B (I used the "setFrameSpaceB()" 4 times
+                    using channels 1,2,3,4.
 ================================================
 */
 
@@ -183,7 +192,7 @@ delay(100);
     CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
     CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //elevator servo
 
-    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 4 Servos + 6 times 2000
+    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 4 Servos (4*2000) + 6 times 2000
     CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,12000); //20000 - 4servos*2000 = 12000 // 50Hz
     //For bank B, we need the same number of channels as bank A (4 SERVO + 1 frame)channels. Since we only have ESC,
     //bank B will have (1 ESC + 4 frame)channels.
