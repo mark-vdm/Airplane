@@ -32,16 +32,16 @@ volatile uint8_t bUpdateFlagsShared;
 // SERVO VALUES
 #define THROTTLE_IN_PIN 3 //The pins for each servo control
 #define ROLL_IN_PIN 4
-#define PITCH_IN_PIN 5
-#define YAW_IN_PIN 6
+#define PITCH_IN_PIN 6
+#define YAW_IN_PIN 5
 #define MODE_IN_PIN 7
 
 // Assign your channel out pins
 #define THROTTLE_OUT_PIN 8
 #define AIL_L_OUT_PIN A0
 #define AIL_R_OUT_PIN A1
-#define RUDDER_OUT_PIN A3
-#define ELEVATOR_OUT_PIN A2
+#define RUDDER_OUT_PIN A2
+#define ELEVATOR_OUT_PIN A3
 
 #define THROTTLE_ID 5 //The index of 'servos' for each servo control
 #define AIL_R_ID   0
@@ -100,10 +100,10 @@ void update_servos();   //updates output to servo
 /////////////////////////////////////////////////////////////////////////////
 
 // ULTRASONIC SENSORS //
-#define TRIGGER_PIN 9 //arduino pin on trigger
-#define ECHO_PIN 9 //Arduino pin to echo
-#define TRIGGER_PINR 10 //arduino pin on trigger
-#define ECHO_PINR 10 //Arduino pin to echo
+#define TRIGGER_PIN 10 //arduino pin on trigger
+#define ECHO_PIN 10 //Arduino pin to echo
+#define TRIGGER_PINR 9 //arduino pin on trigger
+#define ECHO_PINR 9 //Arduino pin to echo
 #define MAX_DISTANCE 200 //Maximum distance for ping (cm)
 
 ///////////////////////////////////////////////////////////////////

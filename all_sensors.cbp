@@ -655,27 +655,25 @@
 		</Compiler>
 		<Unit filename="Airplane.cpp" />
 		<Unit filename="Airplane.h" />
-		<Unit filename="I2Cdev.cpp" />
-		<Unit filename="I2Cdev.h" />
-		<Unit filename="MPU6050.cpp" />
-		<Unit filename="MPU6050.h" />
-		<Unit filename="MPU6050_6Axis_MotionApps20.h" />
-		<Unit filename="MPU6050_9Axis_MotionApps41.h" />
-		<Unit filename="MemoryFree.cpp" />
-		<Unit filename="MemoryFree.h" />
 		<Unit filename="all_sensors.h" />
 		<Unit filename="all_sensors.ino">
 			<Option compile="1" />
 			<Option link="1" />
 		</Unit>
-		<Unit filename="helper_3dmath.h" />
-		<Unit filename="libraries/MyPing.cpp" />
-		<Unit filename="libraries/MyPing.h" />
+		<Unit filename="libraries/I2Cdev.cpp" />
+		<Unit filename="libraries/I2Cdev.h" />
+		<Unit filename="libraries/MPU6050.cpp" />
+		<Unit filename="libraries/MPU6050.h" />
+		<Unit filename="libraries/MPU6050_6Axis_MotionApps20.h" />
+		<Unit filename="libraries/MPU6050_9Axis_MotionApps41.h" />
+		<Unit filename="libraries/MemoryFree.cpp" />
+		<Unit filename="libraries/MemoryFree.h" />
 		<Unit filename="libraries/NewPing.cpp" />
 		<Unit filename="libraries/NewPing.h" />
 		<Unit filename="libraries/PinChangeInt.h" />
 		<Unit filename="libraries/RCArduinoFastLib.cpp" />
 		<Unit filename="libraries/RCArduinoFastLib.h" />
+		<Unit filename="libraries/helper_3dmath.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

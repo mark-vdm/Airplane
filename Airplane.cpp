@@ -4,12 +4,7 @@
 
 Airplane::Airplane(){
     //Default constructor
-//    blinkState = false;
-    // MPU control/status vars
-  //  dmpReady = false;
 
-  log_index = 0;
-  flight_index = 0;
     sensordata dat = {}; //initialize all data values to zero
     receiver rc = {1500};
     rc.throttle = 1000;
@@ -18,9 +13,6 @@ Airplane::Airplane(){
     for (int i = 0; i++; i<6){
         servoPos[i] = 1500;
     }
-  //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-  //NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);// = NewPing(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
-  //pingTimer = millis(); //start timer for ultrasonics
 }
 
 void Airplane::outpt(){
@@ -41,19 +33,19 @@ int Airplane::control(){
     servoPos[RUDDER_ID] = rc.yaw;
     servoPos[ELEVATOR_ID] = rc.pitch;
     servoPos[AIL_L_ID] = rc.roll;
-    servoPos[AIL_R_ID] = 3000 - rc.roll;
+    servoPos[AIL_R_ID] = rc.roll;
 
 
     // if any servo value was updated, set the update flag to 1
-    if (servoPosPrev[THROTTLE_ID] != servoPos[THROTTLE_ID])
+    if (servoPosPrev[THROTTLE_ID] - servoPos[THROTTLE_ID])
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_THROTTLE;
-    if (servoPosPrev[RUDDER_ID] != servoPos[RUDDER_ID])
+    if (abs(servoPosPrev[RUDDER_ID] - servoPos[RUDDER_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_RUD;
-    if (servoPosPrev[ELEVATOR_ID] != servoPos[ELEVATOR_ID])
+    if (abs(servoPosPrev[ELEVATOR_ID] - servoPos[ELEVATOR_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_ELEV;
-    if (servoPosPrev[AIL_L_ID] != servoPos[AIL_L_ID])
+    if (abs(servoPosPrev[AIL_L_ID] - servoPos[AIL_L_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_L;
-    if (servoPosPrev[AIL_R_ID] != servoPos[AIL_R_ID])
+    if (abs(servoPosPrev[AIL_R_ID] - servoPos[AIL_R_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_R;
 }
 

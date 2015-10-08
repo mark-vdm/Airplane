@@ -196,10 +196,10 @@ delay(100);
     CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,12000); //20000 - 4servos*2000 = 12000 // 50Hz
     //For bank B, we need the same number of channels as bank A (4 SERVO + 1 frame)channels. Since we only have ESC,
     //bank B will have (1 ESC + 4 frame)channels.
-    CRCArduinoFastServos::setFrameSpaceB(1,1*2000); // Frame space for bank B (4 blank channels so total is 5)
-    CRCArduinoFastServos::setFrameSpaceB(2,1*2000);
-    CRCArduinoFastServos::setFrameSpaceB(3,1*2000);
-    CRCArduinoFastServos::setFrameSpaceB(4,5*2000);
+    CRCArduinoFastServos::setFrameSpaceB(1,1*100); // Frame space for bank B (4 blank channels so total is 5)
+    CRCArduinoFastServos::setFrameSpaceB(2,1*100);
+    CRCArduinoFastServos::setFrameSpaceB(3,1*100);
+    CRCArduinoFastServos::setFrameSpaceB(4,17*100);
     CRCArduinoFastServos::begin();
     // using the PinChangeInt library, attach the interrupts
     // used to read the channels
@@ -222,7 +222,7 @@ void loop() {
 
     int c = 0;
     // if programming failed, don't try to do anything
-    if (!dmpReady) return;
+    //if (!dmpReady) return;
 c = 0;
     // wait for MPU interrupt or extra packet(s) available
     while (!mpuInterrupt){// && fifoCount < packetSize) { //The fifocount thing here crashes the code after a while
