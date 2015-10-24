@@ -9,19 +9,42 @@ Airplane::Airplane(){
     receiver rc = {1500};
     rc.throttle = 1000;
 
+    //set the servo offsets for each servo
+    servo_offset[AIL_R_ID]=-190-300; //this is always changed to a random number for no reason
+    servo_offset[AIL_L_ID]=-340;
+    servo_offset[RUDDER_ID]=-150 - 30;
+    servo_offset[ELEVATOR_ID]=-80 + 230; //offset to zero servo, + offset to make elevator zero
+    servo_offset[THROTTLE_ID]=0;
+
+    servo_scaling[AIL_R_ID]=100;
+    servo_scaling[AIL_L_ID]=100;
+    servo_scaling[RUDDER_ID]=100;
+    servo_scaling[ELEVATOR_ID]=100;
+    servo_scaling[THROTTLE_ID]=100;
+
     ServoUpdateFlags = 1+2+4+8+16; //start the UpdateFlags as 1
     for (int i = 0; i++; i<6){
         servoPos[i] = 1500;
     }
 }
 
+void Airplane::mode_stop(){
+//If the left toggle (SF) is LOW, cut power and stuff
+
+}
+
 void Airplane::outpt(){
 //    Serial.println("I'm here");
+}
+void Airplane::add_offset(){
+    for (int i = 0; i<6; i++)
+        servoPos[i] += servo_offset[i]; //send the throttle value directly to output
 }
 
 int Airplane::control(){
     //This is the main control algorithm for the airplane. Call every cycle
     int servoPosPrev[5];
+
 
     //copy the previous servo values
     for (uint8_t i = 0; i++; i<5)
@@ -36,6 +59,11 @@ int Airplane::control(){
     servoPos[AIL_R_ID] = rc.roll;
 
 
+
+
+    add_offset(); //add offsets to each servo position
+
+//servo_offset[AIL_R_ID]=10;
     // if any servo value was updated, set the update flag to 1
     if (servoPosPrev[THROTTLE_ID] - servoPos[THROTTLE_ID])
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_THROTTLE;
@@ -47,6 +75,7 @@ int Airplane::control(){
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_L;
     if (abs(servoPosPrev[AIL_R_ID] - servoPos[AIL_R_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_R;
+
 }
 
 /*void Airplane::servo_set(){
@@ -123,6 +152,19 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(rc.roll);
             Serial.print("\t m:");
             Serial.print(rc.mode);
+        }
+        if (select & 0x40){
+            Serial.print("\t Servo Thr: ");
+            Serial.print(servoPos[THROTTLE_ID]);
+            Serial.print("\t Ail L:");
+            Serial.print(servoPos[AIL_L_ID]);
+            Serial.print("\t Ail R:");
+            Serial.print(servoPos[AIL_R_ID]);
+            Serial.print("\t Elev:");
+            Serial.print(servoPos[ELEVATOR_ID]);
+            Serial.print("\t Rud:");
+            Serial.print(servoPos[RUDDER_ID]);
+
         }
         Serial.println("");
     }

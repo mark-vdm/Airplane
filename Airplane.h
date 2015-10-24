@@ -62,10 +62,18 @@ class Airplane{
 
 //        void servo_set(); //makes sure to only update the servo every 10ms
 
+        int servo_offset[6]; //offsets for servos
+        uint8_t servo_scaling[6]; //scaling for servo (percentage)
+
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)
     private:
-
+        //Routines for different flight modes
+        void mode_stop();
+        void mode_airplane();
+        void mode_heli1();
+        void mode_heli2();
+        void add_offset(); //add the offsets for each servo
 };
 
 

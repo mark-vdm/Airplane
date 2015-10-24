@@ -36,7 +36,7 @@
 
 // Minimum and Maximum servo pulse widths, you could change these,
 // Check the servo library and use that range if you prefer
-#define RCARDUINO_SERIAL_SERVO_MIN 1000
+#define RCARDUINO_SERIAL_SERVO_MIN 400
 #define RCARDUINO_SERIAL_SERVO_MAX 2000
 #define RCARDUINO_SERIAL_SERVO_DEFAULT 1500
 

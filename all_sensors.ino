@@ -158,27 +158,24 @@ void calcMode()
 
 void setup() {
 dmpReady = false;
-    // join I2C bus (I2Cdev library doesn't do this automatically)
+
+a.control();
+//    a.servo_set();
+
+     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
         TWBR = 24; // 400kHz I2C clock (200kHz if CPU is 8MHz)
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
-a.control();
-//    a.servo_set();
     // initialize serial communication
     Serial.begin(115200);
-    //while (!Serial); // wait for Leonardo enumeration, others continue immediately
+
+        //while (!Serial); // wait for Leonardo enumeration, others continue immediately
 delay(100);
     initialize_imu();
 
-delay(100);
-    // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
-
-    Serial.print("Free Memory: ");
-    Serial.println(freeMemory());
 
     pingTimer = millis(); //this is used for ultrasonic sensors
 
@@ -187,8 +184,8 @@ delay(100);
     // pulses for driving Electronic speed controllers, servos or other devices
     // designed to interface directly with RC Receivers
     CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN); //throttle servo
-    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //aileron servo
     CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //aileron servo
+    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //aileron servo
     CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
     CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //elevator servo
 
@@ -208,6 +205,17 @@ delay(100);
     PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch,CHANGE);
     PCintPort::attachInterrupt(ROLL_IN_PIN, calcRoll,CHANGE);
     PCintPort::attachInterrupt(MODE_IN_PIN, calcMode,CHANGE);
+
+    //update_servos();
+
+
+//delay(100);
+    // configure LED for output
+    //pinMode(LED_PIN, OUTPUT);
+
+    Serial.print("Free Memory: ");
+    Serial.println(freeMemory());
+
 }
 
 
@@ -316,7 +324,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x21); //eventually move this into main loop
+        a.print_sensors(0x50); //eventually move this into main loop
     }
 }
 
