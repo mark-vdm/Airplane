@@ -27,6 +27,9 @@ Airplane::Airplane(){
         servoPos[i] = 1500;
     }
 }
+int Airplane::check_batt(){
+    dat.batt = analogRead(BATT_PIN)*(5000/1023.0)*6;
+}
 
 void Airplane::mode_stop(){
 //If the left toggle (SF) is LOW, cut power and set flaps to zero
@@ -41,8 +44,6 @@ void Airplane::outpt(){
 void Airplane::add_offset(){
     //The rudder must be scaled by 1.1
     int scale = (servoPos[RUDDER_ID]-1500)*(servo_scaling[RUDDER_ID]-100)/100.0;
-    Serial.print("SCALE: ");
-    Serial.println(scale);
     servoPos[RUDDER_ID] += scale;
 
     for (int i = 0; i<6; i++){
@@ -132,7 +133,8 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.print(dat.ypr[2] * 180/M_PI);
-            Serial.print("\t");
+            Serial.print("\tBattery:");
+            Serial.print(dat.batt);
         }
         if (select & 0x02){
             Serial.print("acc\t");
@@ -185,7 +187,6 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(servoPos[ELEVATOR_ID]);
             Serial.print("\t Rud:");
             Serial.print(servoPos[RUDDER_ID]);
-
         }
         Serial.println("");
     }

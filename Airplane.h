@@ -29,6 +29,8 @@ extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main fi
 #define MODE_HELI   10
 #define MODE_HELI2  20
 
+#define BATT_PIN A6
+
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
 //bool aARM_RAD_FLAG;  // TRUE when radio sends true signal (!-100)
@@ -42,6 +44,7 @@ struct sensordata{
     uint8_t ult_b;
     uint8_t ult_r;
     unsigned long dt;
+    int batt; //voltage of battery (millivolts)
 };
 struct receiver{ //stores the values from the receiver
     int throttle;
@@ -55,6 +58,7 @@ class Airplane{
     public:
         Airplane(); //constructor
         void outpt();
+
 
         sensordata dat; //holds onto the raw sensor values
         receiver rc;    //holds onto the raw receiver values
@@ -74,6 +78,7 @@ class Airplane{
 
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)
+        int check_batt();
     private:
         //Routines for different flight modes
         void mode_stop();

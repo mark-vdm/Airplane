@@ -278,6 +278,7 @@ c = 0;
 // time each section
 
 update_imu();  //this function at the bottom of the file
+        a.check_batt();
 }
 
 int update_imu(){  //there are linker errors if I put this fn in a separate file
@@ -325,7 +326,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x20); //eventually move this into main loop
+        a.print_sensors(0x01); //eventually move this into main loop
     }
 }
 
