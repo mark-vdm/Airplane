@@ -197,6 +197,7 @@ delay(100);
     CRCArduinoFastServos::setFrameSpaceB(2,1*100);
     CRCArduinoFastServos::setFrameSpaceB(3,1*100);
     CRCArduinoFastServos::setFrameSpaceB(4,17*100);
+
     CRCArduinoFastServos::begin();
     // using the PinChangeInt library, attach the interrupts
     // used to read the channels
@@ -239,7 +240,7 @@ c = 0;
         //Serial.println(" <- time");
 
         // ULTRASONIC: send another ping if 50ms has passed since last
-
+/*
         if (millis() >= pingTimer){ //4us if all false. 500us if trigger.
             if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
                 ultra_bot.ping_timer(echoCheck);
@@ -259,7 +260,7 @@ c = 0;
         if (!ultra_rear.ping_result){
             a.dat.ult_r = 0;
         }
-
+*/
         //delay(100);
         update_receiver();
         a.control();
@@ -324,7 +325,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x50); //eventually move this into main loop
+        a.print_sensors(0x20); //eventually move this into main loop
     }
 }
 

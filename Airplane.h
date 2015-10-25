@@ -22,6 +22,13 @@ extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main fi
 #define SERVO_FRAME_SPACE 4
 #define SERVO_FRAME_SPACE2 6
 
+//Flight Modes
+#define error_max 5  //the maximum error in the value 'mode' allowed
+#define MODE_STOP -100
+#define MODE_FLIGHT 0
+#define MODE_HELI   10
+#define MODE_HELI2  20
+
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
 //bool aARM_RAD_FLAG;  // TRUE when radio sends true signal (!-100)
@@ -63,7 +70,7 @@ class Airplane{
 //        void servo_set(); //makes sure to only update the servo every 10ms
 
         int servo_offset[6]; //offsets for servos
-        uint8_t servo_scaling[6]; //scaling for servo (percentage)
+        int servo_scaling[6]; //scaling for servo (percentage)
 
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)
@@ -74,6 +81,7 @@ class Airplane{
         void mode_heli1();
         void mode_heli2();
         void add_offset(); //add the offsets for each servo
+        int limit(int value, int deg); //limit the range of servo
 };
 
 

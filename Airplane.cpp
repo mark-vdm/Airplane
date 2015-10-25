@@ -10,15 +10,15 @@ Airplane::Airplane(){
     rc.throttle = 1000;
 
     //set the servo offsets for each servo
-    servo_offset[AIL_R_ID]=-190-300; //this is always changed to a random number for no reason
-    servo_offset[AIL_L_ID]=-340;
-    servo_offset[RUDDER_ID]=-150 - 30;
+    servo_offset[AIL_R_ID]=-120 -300; //this is always changed to a random number for no reason
+    servo_offset[AIL_L_ID]=-240 +300;
+    servo_offset[RUDDER_ID]=-30 + 100;
     servo_offset[ELEVATOR_ID]=-80 + 230; //offset to zero servo, + offset to make elevator zero
     servo_offset[THROTTLE_ID]=0;
 
     servo_scaling[AIL_R_ID]=100;
     servo_scaling[AIL_L_ID]=100;
-    servo_scaling[RUDDER_ID]=100;
+    servo_scaling[RUDDER_ID]=130;
     servo_scaling[ELEVATOR_ID]=100;
     servo_scaling[THROTTLE_ID]=100;
 
@@ -29,16 +29,35 @@ Airplane::Airplane(){
 }
 
 void Airplane::mode_stop(){
-//If the left toggle (SF) is LOW, cut power and stuff
-
+//If the left toggle (SF) is LOW, cut power and set flaps to zero
+    for (int i = 0; i < 6; i++)
+        servoPos[i] = 1500;
+    servoPos[THROTTLE_ID] = 1000;
 }
 
 void Airplane::outpt(){
 //    Serial.println("I'm here");
 }
 void Airplane::add_offset(){
-    for (int i = 0; i<6; i++)
-        servoPos[i] += servo_offset[i]; //send the throttle value directly to output
+    //The rudder must be scaled by 1.1
+    int scale = (servoPos[RUDDER_ID]-1500)*(servo_scaling[RUDDER_ID]-100)/100.0;
+    Serial.print("SCALE: ");
+    Serial.println(scale);
+    servoPos[RUDDER_ID] += scale;
+
+    for (int i = 0; i<6; i++){
+        servoPos[i] += servo_offset[i];// servo_scaling[i]/100; //send the throttle value directly to output
+    }
+}
+void Airplane::mode_airplane(){
+}
+int Airplane::limit(int value, int deg){
+    deg = abs(deg);
+    if ((value - 1500) < deg*-10)
+        value = deg*-10 + 1500;
+    if ((value - 1500) > deg*10)
+        value = deg*10 + 1500;
+    return value;
 }
 
 int Airplane::control(){
@@ -52,14 +71,16 @@ int Airplane::control(){
 
     //Set new positions for the servos
     //if (abs(servoPos[THROTTLE_ID] - rc.throttle) >10)
-    servoPos[THROTTLE_ID] = rc.throttle; //send the throttle value directly to output
-    servoPos[RUDDER_ID] = rc.yaw;
-    servoPos[ELEVATOR_ID] = rc.pitch;
-    servoPos[AIL_L_ID] = rc.roll;
-    servoPos[AIL_R_ID] = rc.roll;
+    servoPos[THROTTLE_ID] = limit(rc.throttle,30); //send the throttle value directly to output
+    servoPos[RUDDER_ID] = limit(rc.yaw,45);
+    servoPos[ELEVATOR_ID] = limit(rc.pitch,30);
+    servoPos[AIL_L_ID] = limit(rc.roll,30);
+    servoPos[AIL_R_ID] = limit(3000 - rc.roll,30);
 
-
-
+    if (rc.mode < (MODE_STOP + error_max)*5+1500)
+        mode_stop();
+    else if ((rc.mode < (MODE_FLIGHT + error_max)*5+1500) && (rc.mode > (MODE_FLIGHT - error_max)*5+1500))
+        mode_airplane();
 
     add_offset(); //add offsets to each servo position
 
