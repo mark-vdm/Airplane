@@ -27,6 +27,58 @@ Airplane::Airplane(){
         servoPos[i] = 1500;
     }
 }
+
+void Airplane::desired_angle()
+{
+    //calculate the desired angle
+    //For now, assume desired angle is ALWAYS VERTICAL
+//    X.angle_d.w = 0.7071; //set desired angle as vertical
+ //   X.angle_d.x = 0.7071;
+ //   X.angle_d.y = 0;
+ //   X.angle_d.z = 0;
+
+    X.angle_d.x=0;
+    X.angle_d.y=0;
+    X.angle_d.z=1;
+}
+
+void Airplane::update_state(){
+    //update state
+X.angle = dat.q;  //get angle from stored sensor value
+ desired_angle();  //update the desired angle
+/*
+    //Calculate the difference between current and desired angle
+    //SLERP = (q1 x q0[inv] ) * q0. DIFFERENCE = q0(inv) * q1
+    Quaternion q1; //create dummy quaternion
+    Quaternion q0; //create dummy quaternion
+    //Quaternion q0_i; //create dummy quaternion - inverse of q0
+    q0 = X.angle;
+    q1 = X.angle_d;
+    //q0_i = X.angle_d;
+    q0 = q0.getConjugate(); //get inverse of q0
+    q1 = q0.getProduct(q1); //operation: (q0[inverse])*q1
+    float dum = 2*acos(q1.w); //angle difference b/w the two
+    X.angle_off_q = q1;
+*/
+    X.angle_v.x = 0;
+    X.angle_v.y = 1;
+    X.angle_v.z = 0;
+    X.angle_v.rotate(&X.angle); //convert the angle of airplane to vector form (ignores yaw)
+    //find difference between current angle and desired angle
+    X.angle_off.x = 0 - X.angle_v.x;
+    X.angle_off.y = 0 - X.angle_v.y;
+    X.angle_off.z = 0;
+
+
+    //Convert the SLERPed quaternion to matrix form
+    //VectorFloat an; // angle (from airplane's perspective) that points up (global)
+    //X.angle_off.x = 0;
+    //X.angle_off.y = dum;
+    //X.angle_off.z = 0;
+    //X.angle_off.rotate(&q1); //rotate
+
+}
+
 int Airplane::check_batt(){
     dat.batt = analogRead(BATT_PIN)*(5000/1023.0)*6;
 }
@@ -105,20 +157,6 @@ int Airplane::control(){
 
 }
 
-/*void Airplane::servo_set(){
-    //make sure more than 20ms has passed since last servo command
-    for(int i = 0; i++; i<5){
-        //if ((millis() > (servoTime[i] + SERVO_MAX_PULSE_RATE))  //check if 20ms
-        //     && servos[i].readMicroseconds() != servoPos[i])    //check if there was a change
-        //{
-            //servos[i].writeMicroseconds(servoPos[5]);
-            servos[i].write(servoPos[5]);
-            servoTime[i] = millis();
-        //}
-    }
-}*/
-
-
 
 void Airplane::print_sensors(uint8_t select){
     //Print the selected values of sensors - indicated by bit status
@@ -128,8 +166,8 @@ void Airplane::print_sensors(uint8_t select){
     //3 - Ultrasonic    bin: 1000 hex: 08
     //4 - Memory useage bin: 10000 hex: 10
     //5 - RC receiver   bin: 100000  hex: 20
-    //6    hex: 40
-    //7    hex: 80
+    //6 - Servos        bon: 1000000   hex: 40
+    //7 - Test          bin: 10000000   hex: 80
     if(select){ //if any options are selected...
         if (select & 0x01){ // IMU ypr
             Serial.print("ypr\t");
@@ -193,6 +231,34 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("\t Rud:");
             Serial.print(servoPos[RUDDER_ID]);
         }
+        if (select & 0x80){
+            Serial.print("\t Quaternion: angle wxyz: [");
+            Serial.print(X.angle.w);
+            Serial.print(",");
+            Serial.print(X.angle.x);
+            Serial.print(",");
+            Serial.print(X.angle.y);
+            Serial.print(",");
+            Serial.print(X.angle.z);
+            Serial.print("]\t vector: [");
+            //Serial.print(X.angle_v.w);
+            //Serial.print(",");
+            Serial.print(X.angle_v.x);
+            Serial.print(",");
+            Serial.print(X.angle_v.y);
+            Serial.print(",");
+            Serial.print(X.angle_v.z);
+            Serial.print("]\tOffset: [");
+            Serial.print(X.angle_off.x);
+            Serial.print(",");
+            Serial.print(X.angle_off.y);
+            Serial.print(",");
+            Serial.print(X.angle_off.z);
+            Serial.print("]\t");
+        }
         Serial.println("");
+        //If battery voltage is below 9.000V, print warning
+        if(dat.batt < 9600)
+            Serial.print("LOW BATT");
     }
 }

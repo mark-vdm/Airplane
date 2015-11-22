@@ -198,7 +198,10 @@ delay(100);
     CRCArduinoFastServos::setFrameSpaceB(3,1*100);
     CRCArduinoFastServos::setFrameSpaceB(4,17*100);
 
-    CRCArduinoFastServos::begin();
+//*********************SERVO ENABLE*****************************//
+//    CRCArduinoFastServos::begin(); //BEGIN - this was commented out so servos don't move when testing ******************************
+//**************************************************************//
+
     // using the PinChangeInt library, attach the interrupts
     // used to read the channels
     PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle,CHANGE);
@@ -262,6 +265,10 @@ c = 0;
         }
 */
         //delay(100);
+        unsigned long t1 = micros();
+        a.update_state();
+        //Serial.println("");
+        //Serial.print(micros()-t1);
         update_receiver();
         a.control();
         update_servos();
@@ -326,7 +333,7 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
-        a.print_sensors(0x40); //eventually move this into main loop
+        a.print_sensors(0x80); //eventually move this into main loop
     }
 }
 

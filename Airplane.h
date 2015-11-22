@@ -53,17 +53,39 @@ struct receiver{ //stores the values from the receiver
     int roll;
     int mode;
 };
+struct state{ //stores the control system states
+    Quaternion angle;       //current angle
+    //Quaternion angle_d;   //desired angle
+    Quaternion angle_off_q; //(TEMPORARY) the quaternion difference between desired and actual angle
+    VectorFloat angle_off; //SLERP between actual angle and desired angle
+    VectorFloat angle_v; //SLERP between actual angle and desired angle
+    VectorFloat angle_d; //SLERP between actual angle and desired angle
+    VectorFloat Iangle_off; //integral of angle offset (for integral controller)
+
+    VectorInt16 pos_g;     //global position [mm]
+    VectorFloat v_g;       //global velocity
+    VectorFloat a_g;        //global accel
+    VectorFloat v_p;        //airplane velocity
+    VectorFloat a_p;        //airplane accel
+    VectorFloat F;          //airplane forces
+    VectorFloat M;          //airplane moment
+    VectorFloat vAng;      //airplane angular velocity (omega)
+    VectorFloat aAng;      //airplane angular accel (alpha)
+    int16_t flaps;          //gets the current position of each servo
+};
 
 class Airplane{
     public:
         Airplane(); //constructor
         void outpt();
 
-
+        state X; //holds the control state of the airplane
         sensordata dat; //holds onto the raw sensor values
         receiver rc;    //holds onto the raw receiver values
         void print_sensors(uint8_t select);
  int control();
+ void update_state(); //updates the state prediction
+ void desired_angle(); //calculates the desired angle
         //Servos
         //SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
         //Servo servos[5]; // throttle, ail_l, ail_r, rud, elevator
