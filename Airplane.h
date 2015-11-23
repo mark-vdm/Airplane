@@ -31,6 +31,10 @@ extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main fi
 
 #define BATT_PIN A6
 
+
+//Constants
+#define SIN45 0.707106
+
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
 //bool aARM_RAD_FLAG;  // TRUE when radio sends true signal (!-100)
@@ -55,12 +59,19 @@ struct receiver{ //stores the values from the receiver
 };
 struct state{ //stores the control system states
     Quaternion angle;       //current angle
-    //Quaternion angle_d;   //desired angle
-    Quaternion angle_off_q; //(TEMPORARY) the quaternion difference between desired and actual angle
-    VectorFloat angle_off; //SLERP between actual angle and desired angle
-    VectorFloat angle_v; //SLERP between actual angle and desired angle
-    VectorFloat angle_d; //SLERP between actual angle and desired angle
-    VectorFloat Iangle_off; //integral of angle offset (for integral controller)
+    Quaternion angle_desire;   //desired angle
+    Quaternion angle_off_q; // This quaternion points from the AIRPLANE orientation to the DESIRED orientation. angle*angle_off_q = angle_desired
+    VectorFloat test_angle; //FOR TEST USE ONLY
+    //VectorFloat angle_off;
+    VectorFloat angle_v; //Angle of airplane, vector form. Useful for finding inclination and yaw. Z-component is inclination
+    //VectorFloat angle_d; //SLERP between actual angle and desired angle
+    //VectorFloat Iangle_off; //integral of angle offset (for integral controller)
+
+    //Vectors for the x,y, and z-axis offsets
+    VectorFloat x_vect;
+    VectorFloat y_vect;
+    VectorFloat z_vect;
+
 
     VectorInt16 pos_g;     //global position [mm]
     VectorFloat v_g;       //global velocity
@@ -72,6 +83,8 @@ struct state{ //stores the control system states
     VectorFloat vAng;      //airplane angular velocity (omega)
     VectorFloat aAng;      //airplane angular accel (alpha)
     int16_t flaps;          //gets the current position of each servo
+
+    //float incline;  //This is the inclination of the airplane (angle from horizontal) (horizontal = 0, vertical = 90). Equal to angle_v.z
 };
 
 class Airplane{
@@ -104,8 +117,8 @@ class Airplane{
     private:
         //Routines for different flight modes
         void mode_stop();
-        void mode_airplane();
-        void mode_heli1();
+        void mode_airplane(); //direct control of ctrl surfaces
+        void mode_heli1();    //tries to fly vertical
         void mode_heli2();
         void add_offset(); //add the offsets for each servo
         int limit(int value, int deg); //limit the range of servo
