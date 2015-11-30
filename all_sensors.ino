@@ -175,8 +175,9 @@ a.control();
         //while (!Serial); // wait for Leonardo enumeration, others continue immediately
 delay(100);
     initialize_imu();
+    a.init();
 
-
+    a.servoPos[THROTTLE_ID]=2000; //start this for programming the ESC
     pingTimer = millis(); //this is used for ultrasonic sensors
 
     /////////////// Initialize SERVOS and RECEIVER //////////////////////
@@ -196,7 +197,8 @@ delay(100);
     CRCArduinoFastServos::setFrameSpaceB(1,1*100); // Frame space for bank B (4 blank channels so total is 5)
     CRCArduinoFastServos::setFrameSpaceB(2,1*100);
     CRCArduinoFastServos::setFrameSpaceB(3,1*100);
-    CRCArduinoFastServos::setFrameSpaceB(4,17*100);
+    CRCArduinoFastServos::setFrameSpaceB(4,7*100);
+
 
 //*********************SERVO ENABLE*****************************//
     CRCArduinoFastServos::begin(); //BEGIN - this was commented out so servos don't move when testing ******************************
@@ -227,6 +229,8 @@ delay(100);
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
+
+    unsigned long dt = 0;   //this is the delta time between steps (for testing gyro rate)
 
 void loop() {
     unsigned long time = 0;
@@ -265,28 +269,40 @@ c = 0;
         }
 */
         //delay(100);
-        unsigned long t1 = micros();
-        a.update_state();
-        //Serial.println("");
-        //Serial.print(micros()-t1);
+
+
+        //a.update_angle(); //moved to the IMU update section - only updates with IMU
+
+
         update_receiver();
+        unsigned long t1 = micros();
+//        Serial.println("Ctrl_t:");
         a.control();
+//Serial.print(micros()-t1);
         update_servos();
 
-}
-//Serial.print(c);
-// use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
-// check the mpuInt before each operation of non-critical things.
-// use flags and stuff for the ultrasonics (needs an Interrupt routine)
-// check the radio inputs (use an ISR)
-// control algorithm - check mode flags
-// motor and servo controls
-// write to sd
-// time each section
+        c++; //number of loops per IMU cycle
+    }
+    //Serial.print(c);
+    // use if(mpuInterrupt && dmpReady) instead of while to update imu stuff.
+    // check the mpuInt before each operation of non-critical things.
+    // use flags and stuff for the ultrasonics (needs an Interrupt routine)
+    // control algorithm - check mode flags
+    // motor and servo controls
+    // time each section
+    //Serial.println("");
+    unsigned long t1 = micros();
 
-update_imu();  //this function at the bottom of the file
-a.print_sensors(0x80); //eventually move this into main loop
-        a.check_batt();
+    update_imu();  //this function at the bottom of the file             //4000us, occurs every 10000us
+    dt = millis();
+    Serial.print("c:"); //print the number of control loops per imu count
+    Serial.print(c);
+    a.update_angle(); //update the vector angles and offset from desired //1450us
+
+    a.print_sensors(0x04);
+
+
+    a.check_batt();
 }
 
 int update_imu(){  //there are linker errors if I put this fn in a separate file
@@ -321,20 +337,33 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
         mpu.dmpGetAccel(&aa, fifoBuffer);
         mpu.dmpGetGyro(&gy, fifoBuffer);
 
+
+
         //save the quaternion, accel, and gyr
         a.dat.q = q;
         a.dat.aa = aa;
-        a.dat.gy = gy;
+        a.dat.gy = gy; //can't use this - not enough precision
 
-        mpu.dmpGetGravity(&gravity, &q);
-        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-        a.dat.ypr[0] = ypr[0];
-        a.dat.ypr[1] = ypr[1];
-        a.dat.ypr[2] = ypr[2];
+
+       //calculate rough angle from the gyros
+        //get the average of the gyros
+        a.dat.gy_array[a.dat.gy_ar_index] = gy; //add current value to the array
+        a.dat.gy_ar_index = (1+a.dat.gy_ar_index)%a.dat.gy_ar_size; //increment the index, mod by size of array so it wraps around
+        a.average_gy(); //calculate the new average values
+        a.anglegyro += a.dat.gy_av.z*(1.5/1.0) * (millis()-dt)/1000.0; //(multiply by 1.5 to get deg/s. multiply by pi/180 to get rad/s)
+//Serial.println(a.dat.gy_ar_index);
+        //mpu.dmpGetGravity(&gravity, &q);
+        //mpu.dmpGetYawPitchRoll(ypr, &q, &gravity); //Don't need ypr anymore. Saved 260 bytes by removing this
+        //a.dat.ypr[0] = ypr[0];
+        //a.dat.ypr[1] = ypr[1];
+        //a.dat.ypr[2] = ypr[2];
 
         //Serial.print("TIME: "); // Print a recorded delta time
         //Serial.print(a.dat.dt); //
         //a.print_sensors(0x80); //eventually move this into main loop
+
+        //convert to vectors
+
     }
 }
 

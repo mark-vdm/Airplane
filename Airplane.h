@@ -34,6 +34,8 @@ extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main fi
 
 //Constants
 #define SIN45 0.707106
+#define deg2rad 0.01745329
+#define N_GY_AVERAGES 10 //number of samples to average the gyro over
 
 // MARK'S PROGRAM VARIABLES AND STUFF
 //ARM_FLAG: indicates when the motor+servos are armed. Signalled from radio controller
@@ -44,7 +46,12 @@ struct sensordata{
     Quaternion q;           // [w, x, y, z]         quaternion container
     VectorInt16 aa;         // [x, y, z]            accel sensor measurements
     VectorInt16 gy;     // [x, y, z]            gravity-free accel sensor measurements
-    float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+    VectorFloat gy_av; // average gyro
+    VectorInt16 gy_array[10]; //save the last 5
+    int gy_ar_index; //index of the gyro array
+    uint8_t gy_ar_size; //size of index
+
+    //float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector //Saved 260 bytes by removing this
     uint8_t ult_b;
     uint8_t ult_r;
     unsigned long dt;
@@ -61,7 +68,6 @@ struct state{ //stores the control system states
     Quaternion angle;       //current angle
     Quaternion angle_desire;   //desired angle
     Quaternion angle_off_q; // This quaternion points from the AIRPLANE orientation to the DESIRED orientation. angle*angle_off_q = angle_desired
-    VectorFloat test_angle; //FOR TEST USE ONLY
     //VectorFloat angle_off;
     VectorFloat angle_v; //Angle of airplane, vector form. Useful for finding inclination and yaw. Z-component is inclination
     //VectorFloat angle_d; //SLERP between actual angle and desired angle
@@ -84,12 +90,16 @@ struct state{ //stores the control system states
     VectorFloat aAng;      //airplane angular accel (alpha)
     int16_t flaps;          //gets the current position of each servo
 
+
+
     //float incline;  //This is the inclination of the airplane (angle from horizontal) (horizontal = 0, vertical = 90). Equal to angle_v.z
 };
 
 class Airplane{
     public:
+            float anglegyro; //angle calculated (for debugging gyro rate only)
         Airplane(); //constructor
+        void init(); //initialize stuff
         void outpt();
 
         state X; //holds the control state of the airplane
@@ -97,7 +107,8 @@ class Airplane{
         receiver rc;    //holds onto the raw receiver values
         void print_sensors(uint8_t select);
  int control();
- void update_state(); //updates the state prediction
+ //void update_state(); //updates the state prediction
+ void update_angle(); //updates the angles (vectors and stuff)
  void desired_angle(); //calculates the desired angle
         //Servos
         //SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
@@ -114,6 +125,7 @@ class Airplane{
         uint16_t flight_index; //flight number - used for data file name(0-9999)
         uint8_t log_index; //recorded subsection of flight -(0-255)
         int check_batt();
+               void average_gy();  //calculate the average gyro value
     private:
         //Routines for different flight modes
         void mode_stop();
@@ -122,6 +134,8 @@ class Airplane{
         void mode_heli2();
         void add_offset(); //add the offsets for each servo
         int limit(int value, int deg); //limit the range of servo
+
+
 };
 
 

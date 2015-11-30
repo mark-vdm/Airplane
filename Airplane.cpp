@@ -10,7 +10,8 @@ Airplane::Airplane(){
     rc.throttle = 1000;
 
     //set the servo offsets for each servo
-    servo_offset[AIL_R_ID]=-120 -300; //this is always changed to a random number for no reason
+    servo_offset[AIL_R_ID]=-120
+     -300; //
     servo_offset[AIL_L_ID]=-240 +300;
     servo_offset[RUDDER_ID]=240;
     servo_offset[ELEVATOR_ID]=-80 + 230; //offset to zero servo, + offset to make elevator zero
@@ -26,8 +27,50 @@ Airplane::Airplane(){
     for (int i = 0; i++; i<6){
         servoPos[i] = 1500;
     }
+
+    dat.gy_ar_index = 0;
+    dat.gy_ar_size = 10;
+}
+void Airplane::init()
+{
+    dat.gy_ar_index = 0;
+    dat.gy_ar_size = N_GY_AVERAGES;
 }
 
+void Airplane::average_gy()
+{
+    dat.gy_av.x = 0;
+    dat.gy_av.y = 0;
+    dat.gy_av.z = 0;
+    uint8_t resetx = 0;
+    uint8_t resety = 0;
+    uint8_t resetz = 0;
+    //Calculate the average gyro values. Reset to 0 if any value is 0
+    for(int i = 0; i< dat.gy_ar_size; i++){
+        dat.gy_av.x += dat.gy_array[i].x;
+        dat.gy_av.y += dat.gy_array[i].y;
+        dat.gy_av.z += dat.gy_array[i].z;
+
+        if(dat.gy_array[i].x == 0) //check if there were any zero vlues
+            resetx ++;
+        if(dat.gy_array[i].y == 0)
+            resety ++;
+        if(dat.gy_array[i].z == 0)
+            resetz ++;
+    }
+    if(resetx)
+        dat.gy_av.x = 0;
+    else
+        dat.gy_av.x /= dat.gy_ar_size;
+    if(resety)
+        dat.gy_av.y = 0;
+    else
+        dat.gy_av.y /= dat.gy_ar_size;
+    if(resetz)
+        dat.gy_av.z = 0;
+    else
+        dat.gy_av.z /= dat.gy_ar_size;
+}
 void Airplane::desired_angle()
 {
     //calculate the desired angle
@@ -37,9 +80,30 @@ void Airplane::desired_angle()
    X.angle_desire.y = 0;
    X.angle_desire.z = 0;
    X.angle_desire.normalize();  //normalize the quaternion
+
+    Quaternion input;
+    input.w = ((rc.roll-1500)/500.0)*5*PI/180.0;
+    input.x = 0;
+    input.y = 0;
+    input.z = 1;
+    X.angle_desire = X.angle_desire.getProduct(input);
+
+    input.w = -1*((rc.pitch-1500)/500.0)*5*PI/180.0;
+    input.x = 1;
+    input.y = 0;
+    input.z = 0;
+    X.angle_desire = X.angle_desire.getProduct(input);
+
+    input.w = ((rc.yaw-1500)/500.0)*15*PI/180.0;
+    input.x = 0;
+    input.y = 1;
+    input.z = 0;
+    X.angle_desire = X.angle_desire.getProduct(input);
+   //add the yaw/pitch/roll from receiver
+   //multiply X by yaw, then pitch, then roll
 }
 
-void Airplane::update_state(){
+void Airplane::update_angle(){
     //update state
 X.angle = dat.q;  //get angle from stored sensor value
  desired_angle();  //update the desired angle
@@ -53,18 +117,12 @@ X.angle = dat.q;  //get angle from stored sensor value
     //q1 = X.angle_desire;
     //q0_i = X.angle_d;
     q0 = q0.getConjugate(); //get inverse of q0
-    X.angle_off_q = q0.getProduct(X.angle_desire);//q1); //operation: (q0[inverse])*q1
-    //float dum = 2*acos(q1.w); //angle difference b/w the two
-    // = q0;
-    X.test_angle.x = 1;
-    X.test_angle.y = 0;
-    X.test_angle.z = 0;
-    X.test_angle.rotate(&X.angle_off_q);
+    X.angle_off_q = q0.getProduct(X.angle_desire);//q1); //operation: (q0[inverse])*q1. This gets the difference between q0 and q1 //takes 250us
 //
     X.angle_v.x = 0;
     X.angle_v.y = 1;
     X.angle_v.z = 0;
-    X.angle_v.rotate(&X.angle); //convert the angle of airplane to vector form (ignores yaw)
+    X.angle_v.rotate(&X.angle); //convert the angle of airplane to vector form (ignores yaw) //'rotate' takes 300us
     //find difference between current angle and desired angle
     //X.angle_off.x = 0 - X.angle_v.x;
     //X.angle_off.y = 0 - X.angle_v.y;
@@ -89,18 +147,19 @@ X.angle = dat.q;  //get angle from stored sensor value
 //    float angle = dum.z; //this is the z-component. Same as angle_v.z
 
     //get the rotations of x,y, and z vector
+
     X.x_vect.x = 1;
     X.x_vect.y = 0;
     X.x_vect.z = 0;
-    X.x_vect.rotate(&X.angle_off_q);
+    X.x_vect.rotate(&X.angle_off_q); //'rotate' takes 300us and 1000bytes
     X.y_vect.x = 0;
     X.y_vect.y = 1;
     X.y_vect.z = 0;
-    X.y_vect.rotate(&X.angle_off_q);
+    X.y_vect.rotate(&X.angle_off_q); //'rotate' takes 300us
     X.z_vect.x = 0;
     X.z_vect.y = 0;
     X.z_vect.z = 1;
-    X.z_vect.rotate(&X.angle_off_q);
+    X.z_vect.rotate(&X.angle_off_q); //'rotate' takes 300us
 
 
 }
@@ -133,7 +192,7 @@ void Airplane::add_offset(){
 void Airplane::mode_airplane(){
     //Set new positions for the servos
     //if (abs(servoPos[THROTTLE_ID] - rc.throttle) >10)
-    servoPos[THROTTLE_ID] = rc.throttle; //send the throttle value directly to output
+    servoPos[THROTTLE_ID] = limit(rc.throttle,2000); //send the throttle value directly to output
     servoPos[RUDDER_ID] = limit(rc.yaw,42);
     servoPos[ELEVATOR_ID] = limit(rc.pitch,30);
     servoPos[AIL_L_ID] = limit(rc.roll,30);
@@ -144,35 +203,50 @@ void Airplane::mode_heli1(){
     //Try to fly vertical like a helicopter
     // Find angle offset (complete in update_state())
 
+    //Set the desired angle to vertical
+    //Rotate the desired angle by the input from controller
+
     // Control the rudder
     // Assume: close to vertical
     if(X.angle_v.z > SIN45){   //inclination is > than 45 degrees
+        //RUDDER
         //angle_v is the vector form of airplane orientation. The z-component is inclination
         //Rotate the x-axis by the angle.
-/*
-        VectorFloat dum;
-        dum.x = 1;
-        dum.y = 0;
-        dum.z = 0;
-        dum.rotate(&X.angle_off_q);
-*/
-        //VectorFloat dum2;
-        //dum2.x = 0;
-        //dum2.y = 0;
-        //dum2.z = 1;
-        //dum2.rotate(&X.angle_off_q);
-        X.x_vect;
-        X.z_vect;
-        float dum_angle = X.x_vect.x/sqrt(pow(X.x_vect.x,2)+ pow(X.x_vect.z,2));
-        float dum2_angle = X.z_vect.x/sqrt(pow(X.z_vect.x,2)+ pow(X.z_vect.z,2));
+        float dum = sqrt(pow(X.x_vect.x,2)+ pow(X.x_vect.z,2));   //This approaches 1 when the axis is parallel to x-axis. 0 if parallel to z-axis ORIGINAL
+        float dum2 = sqrt(pow(X.z_vect.x,2)+ pow(X.z_vect.z,2));  //ORIGINAL
         //Make the "rotated x-axis" stay on the x-z plane.
-        float Kp = 5; //gain
-        float ctrl = ((Kp * -(X.x_vect.y*dum_angle+X.z_vect.y*dum2_angle) * 500) +1500); //X.x_vect.y is between -1,1. Scale this to 1000,2000
+        float Kp = 15; //proportional gain
+        float Kd = 3; //derivative gain
+        float Ki = 0; //integral gain
+        float ctrl = Kp * -(X.x_vect.y*X.x_vect.x/dum+X.z_vect.y*X.z_vect.x/dum2); //X.x_vect.y is between -1,1. Scale this to 1000,2000
+        //Derivative Control - rate of rotation in the z-axis
+        //Get the rate of rotation in z-axis. use gy_av for the average rate of rotation (because min sensitivity of sensor is 3deg/s
+        ctrl = ctrl + Kd*dat.gy_av.z*(1.5/1.0)*(PI/180.0); //add the derivative control (or more precisely: subtract it) 32768 is equal to 250 deg/second rotation. 1deg = pi/180 rad
+        ctrl = ctrl*500 + 1500; //Shift to between 1000,2000
         servoPos[RUDDER_ID] = limit(ctrl,42);
+
+        //ELEVATOR - same as rudder, but x and z swapped in 'x_vect.x' > 'x_vect.z'
+        ctrl = Kp * (X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //proportional
+        ctrl = ctrl + Kd * dat.gy_av.x*(1.5/1.0)*(PI/180.0);                                      //derivative
+
+        ctrl = ctrl*500 + 1500;
+        servoPos[ELEVATOR_ID] = limit(ctrl,30);
+
+        //AILERONS - fix the roll.
+        Kp = 7;
+        Kd = 1;
+        ctrl = Kp * X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
+        ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
+        ctrl = ctrl*500 + 1500;
+        servoPos[AIL_L_ID] = limit(ctrl,30);
+        servoPos[AIL_R_ID] = limit(ctrl,30);
+
+        //get the throttle from receiver
+        servoPos[THROTTLE_ID] = limit(rc.throttle,2000);
     }
     else{ // Assume: close to horizontal
-        //Rotate the x-axis by the angle
-        //make the "rotated x-axis" stay on the x-z plane
+        //Use rudder to fix yaw - keep the
+
         mode_stop();
     }
 
@@ -238,7 +312,7 @@ void Airplane::print_sensors(uint8_t select){
     //6 - Servos        bon: 1000000   hex: 40
     //7 - Test          bin: 10000000   hex: 80
     if(select){ //if any options are selected...
-        if (select & 0x01){ // IMU ypr
+/*        if (select & 0x01){ // IMU ypr
             Serial.print("ypr\t");
             Serial.print(dat.ypr[0] * 180/M_PI);
             Serial.print("\t");
@@ -247,7 +321,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.ypr[2] * 180/M_PI);
             Serial.print("\tBattery:");
             Serial.print(dat.batt);
-        }
+        }*/
         if (select & 0x02){
             Serial.print("acc\t");
             Serial.print(dat.aa.x);
@@ -264,19 +338,26 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.gy.y);
             Serial.print("\t");
             Serial.print(dat.gy.z);
+            Serial.print("\t Gyroangle:");
+           Serial.print(anglegyro);
+           Serial.print("\t avg xyz:");
+               Serial.print(dat.gy_av.x);
             Serial.print("\t");
+            Serial.print(dat.gy_av.y);
+            Serial.print("\t");
+            Serial.print(dat.gy_av.z);
         }
-        if (select & 0x08){
+/*        if (select & 0x08){
             Serial.print("UltraB: ");
             Serial.print(dat.ult_b);
             Serial.print("\t UltraR: ");
             Serial.print(dat.ult_r);
         }
-        if (select & 0x10){
-            Serial.print("\t cpu: ");
+        if (select & 0x10){     //300us
+            Serial.print("\t mem: ");
             Serial.print(freeMemory());
         }
-        if (select & 0x20){
+ /*       if (select & 0x20){
             Serial.print("\t radio thr: ");
             Serial.print(rc.throttle);
             Serial.print("\t y:");
@@ -288,7 +369,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("\t m:");
             Serial.print(rc.mode);
         }
-        if (select & 0x40){
+ /*       if (select & 0x40){
             Serial.print("\t Servo Thr: ");
             Serial.print(servoPos[THROTTLE_ID]);
             Serial.print("\t Ail L:");
@@ -300,7 +381,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("\t Rud:");
             Serial.print(servoPos[RUDDER_ID]);
         }
-        if (select & 0x80){
+ /*       if (select & 0x80){ //4700us
             Serial.print("\t Quaternion: angle wxyz: [");
             Serial.print(X.angle.w);
             Serial.print(",");
@@ -324,7 +405,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(",");
             Serial.print(X.x_vect.z);
             Serial.print("]\t");
-        }
+        }*/
         Serial.println("");
         //If battery voltage is below 10.500V, print warning. (under 11V = 6% batt remaining)
         //if(dat.batt < 11000)
