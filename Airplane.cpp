@@ -62,29 +62,36 @@ void Airplane::predict_gy() //284 bytes
 {
     //predict the rate of rotation based on the flap angles
     float K[3]; //constant multiplier:
-    K[1] = 1.918;//constant multiplier for ROLL (y axis)
+    K[1] = 1.918/2.0;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
     K[2] = 0.8506;//constant multiplier for YAW (z axis)
     K[0] = 1.89;//constant multiplier for PITCH (x axis)
 
-    float gy_decay = 0.85; //use this value to bring the gyro value back to zero over time
+    float gy_decay = 0.95; //use this value to bring the gyro value back to zero over time
 
 //** NOTE: Multiply by 180/pi/1.5 to compare them to the DMP gyro values
     //for absolutely no reason at all, X.gy_pred[0] crashes the program. Solution: Increase array by 1 and use gy_pred[3].
     X.gy_pred[3] -= (dt/1000000.0)*K[0]*X.servo_pred[ELEVATOR_ID]; //gy x axis, using ELEVATOR servo
-    X.gy_pred[1] -= (dt/1000000.0)*K[1]*X.servo_pred[AIL_R_ID]; //gy y axis, using AILERON servo
     X.gy_pred[2] -= (dt/1000000.0)*K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo
+
+    //For ailerons, the motor is applying a torque (negative). Add this to the predicted gyro rate
+    X.gy_pred[1] -= (dt/1000000.0)*K[1]*X.servo_pred[AIL_R_ID]; //gy y axis, using AILERON servo
+
+
 
     //reset to 0 if the gyro measures zero and the predicted value is more than 1deg/s (0.017 rad/s)
     //decay the predicted gyro rate if the measured gyro is 0 OR the control surface is < 1 degree
-    float max_rate = 0.017*6; //max rate: 0.017 = 1 deg/sec
-    float decay_angle = 0.017*1; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
-    if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle){// && (abs(X.gy_pred[3]) > 0.017)){
+    float max_rate = 0.017*10; //max rate: 0.017 = 1 deg/sec
+    float decay_angle = 0.017*4; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
+    if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
         X.gy_pred[3] *= gy_decay;
    }
-    if(abs(X.servo_pred[AIL_R_ID]) < decay_angle)// && (abs(X.gy_pred[1]) > 0.017))
-        X.gy_pred[1] *= gy_decay;
-    if(abs(X.servo_pred[RUDDER_ID]) < decay_angle)// && (abs(X.gy_pred[2]) > 0.017))
+    if(abs(X.servo_pred[RUDDER_ID]) < decay_angle && (abs(X.gy_pred[2]) > 0.017*3))
         X.gy_pred[2] *= gy_decay;
+    if(abs(X.servo_pred[AIL_R_ID]) < decay_angle && (abs(X.gy_pred[1] + 0.017*2) > 0.017*3)) //add the 0.017*2 offset of the prop torque
+        X.gy_pred[1] *= gy_decay;
+
+    //add the motor torque offset to y-axis
+    X.gy_pred[1] -= (dt/1000000.0)*0.017*2; //guess: motor is applying 2deg/s rotation
 
     //make sure each value is less than 180deg/s = 3.14
     for(int i = 1; i < 4; i++)
@@ -310,8 +317,8 @@ void Airplane::mode_heli1(){
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
 
         //AILERONS - fix the roll.
-        Kp = 10;
-        Kd = 12;
+        Kp = 7;
+        Kd = 15;
         ctrl = Kp * X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
         //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
         ctrl = ctrl + Kd * X.gy_pred[1];
