@@ -159,7 +159,10 @@ void calcMode()
 void setup() {
 dmpReady = false;
 
-a.control();
+   // a.control();
+   //Set the speed
+    a.mode_stop();
+    a.add_offset();
 //    a.servo_set();
 
      // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -177,7 +180,7 @@ delay(100);
     initialize_imu();
     a.init();
 
-    a.servoPos[THROTTLE_ID]=2000; //start this for programming the ESC
+
     pingTimer = millis(); //this is used for ultrasonic sensors
 
     /////////////// Initialize SERVOS and RECEIVER //////////////////////
@@ -219,9 +222,10 @@ delay(100);
     // configure LED for output
     //pinMode(LED_PIN, OUTPUT);
 
-    Serial.print("Free Memory: ");
-    Serial.println(freeMemory());
-
+    //Serial.print("Free Memory: ");
+    //Serial.println(freeMemory());
+pinMode(LED_PIN, OUTPUT);
+digitalWrite(LED_PIN, LOW);   // turn LED off
 }
 
 
@@ -233,10 +237,10 @@ delay(100);
     unsigned long dt = 0;   //this is the delta time between steps (for testing gyro rate)
 
 void loop() {
-    unsigned long time = 0;
-    time = micros();
+    //unsigned long time = 0;
+    //time = micros();
 
-    int c = 0;
+    uint8_t c = 0;
     // if programming failed, don't try to do anything
     //if (!dmpReady) return;
 c = 0;
@@ -275,7 +279,7 @@ c = 0;
 
 
         update_receiver();
-        unsigned long t1 = micros();
+//        unsigned long t1 = micros();
 //        Serial.println("Ctrl_t:");
         a.control();
 //Serial.print(micros()-t1);
@@ -291,18 +295,23 @@ c = 0;
     // motor and servo controls
     // time each section
     //Serial.println("");
-    unsigned long t1 = micros();
+   // unsigned long t1 = micros();
 
     update_imu();  //this function at the bottom of the file             //4000us, occurs every 10000us
-    dt = millis();
-    Serial.print("c:"); //print the number of control loops per imu count
-    Serial.print(c);
+    //dt = millis(); //30 bytes
+    //Serial.print("c:"); //print the number of control loops per imu count //30 bytes
+    //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    a.print_sensors(0x04);
+    a.print_sensors(0x04); //takes up 1000 bytes of program memory
 
 
-    a.check_batt();
+    a.check_batt(); //150 bytes
+    if(a.dat.batt < 11000)
+        digitalWrite(LED_PIN, HIGH);   // turn LED on
+    else
+        digitalWrite(LED_PIN, LOW);
+
 }
 
 int update_imu(){  //there are linker errors if I put this fn in a separate file
@@ -347,10 +356,10 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
        //calculate rough angle from the gyros
         //get the average of the gyros
-        a.dat.gy_array[a.dat.gy_ar_index] = gy; //add current value to the array
-        a.dat.gy_ar_index = (1+a.dat.gy_ar_index)%a.dat.gy_ar_size; //increment the index, mod by size of array so it wraps around
-        a.average_gy(); //calculate the new average values
-        a.anglegyro += a.dat.gy_av.z*(1.5/1.0) * (millis()-dt)/1000.0; //(multiply by 1.5 to get deg/s. multiply by pi/180 to get rad/s)
+//        a.dat.gy_array[a.dat.gy_ar_index] = gy; //add current value to the array
+//        a.dat.gy_ar_index = (1+a.dat.gy_ar_index)%a.dat.gy_ar_size; //increment the index, mod by size of array so it wraps around
+//        a.average_gy(); //calculate the new average values //174 bytes
+        //a.anglegyro += a.dat.gy_av.z*(1.5/1.0) * (millis()-dt)/1000.0; //(multiply by 1.5 to get deg/s. multiply by pi/180 to get rad/s)
 //Serial.println(a.dat.gy_ar_index);
         //mpu.dmpGetGravity(&gravity, &q);
         //mpu.dmpGetYawPitchRoll(ypr, &q, &gravity); //Don't need ypr anymore. Saved 260 bytes by removing this
@@ -374,13 +383,10 @@ int initialize_imu(){
 
     // verify connection
     //Serial.println(F("Testing device connections..."));
-    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+//    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed")); //236 bytes
 
     // wait for ready
-    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-//    while (Serial.available() && Serial.read()); // empty buffer
-//    while (!Serial.available());                 // wait for data
-//    while (Serial.available() && Serial.read()); // empty buffer again
+//    Serial.println(F("\nSend any character to begin DMP programming and demo: ")); // 236 bytes
 
     // load and configure the DMP
 //    Serial.println(F("Initializing DMP..."));
@@ -409,7 +415,7 @@ int initialize_imu(){
 
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
-    } else {
+    } /*else { //112 bytes
         // ERROR!
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
@@ -417,7 +423,7 @@ int initialize_imu(){
         Serial.print(F("DMP Initialization failed (code "));
         Serial.print(devStatus);
         Serial.println(F(")"));
-    }
+    }*/
 
 }
 

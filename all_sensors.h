@@ -112,6 +112,7 @@ void update_servos();   //updates output to servo
     #include "Wire.h"
 #endif
 
+
 int update_imu();   //call this to update IMU values (must call often)
 int initialize_imu(); //call this to start the IMU (call once)
 int initialize_SD();  //call this to start the SD card (call once)
@@ -131,6 +132,7 @@ uint8_t ULTRA_SELECT = 0;
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
 
+
 // MPU control/status vars
 extern bool dmpReady;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -143,10 +145,10 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 Quaternion q;           // [w, x, y, z]         quaternion container
 VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 VectorInt16 gy;
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
-VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
-float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+//VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements //32 bytes
+//VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
+//VectorFloat gravity;    // [x, y, z]            gravity vector
+//float euler[3];         // [psi, theta, phi]    Euler angle container
+//float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
 #endif // ALL_SENSORS_H_INCLUDED

@@ -46,10 +46,10 @@ struct sensordata{
     Quaternion q;           // [w, x, y, z]         quaternion container
     VectorInt16 aa;         // [x, y, z]            accel sensor measurements
     VectorInt16 gy;     // [x, y, z]            gravity-free accel sensor measurements
-    VectorFloat gy_av; // average gyro
-    VectorInt16 gy_array[10]; //save the last 5
-    int gy_ar_index; //index of the gyro array
-    uint8_t gy_ar_size; //size of index
+    //VectorFloat gy_av; // average gyro
+    //VectorInt16 gy_array[10]; //save the last 5
+    //int gy_ar_index; //index of the gyro array
+    //uint8_t gy_ar_size; //size of index
 
     //float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector //Saved 260 bytes by removing this
     uint8_t ult_b;
@@ -78,7 +78,7 @@ struct state{ //stores the control system states
     VectorFloat y_vect;
     VectorFloat z_vect;
 
-
+/*
     VectorInt16 pos_g;     //global position [mm]
     VectorFloat v_g;       //global velocity
     VectorFloat a_g;        //global accel
@@ -88,19 +88,22 @@ struct state{ //stores the control system states
     VectorFloat M;          //airplane moment
     VectorFloat vAng;      //airplane angular velocity (omega)
     VectorFloat aAng;      //airplane angular accel (alpha)
-    int16_t flaps;          //gets the current position of each servo
 
-
-
+*/
+    float servo_pred[4];          //stores the current position of each servo [rad]
+    float gy_pred[4];       //predicted rate of rotation [rad/s] //16 bytes
     //float incline;  //This is the inclination of the airplane (angle from horizontal) (horizontal = 0, vertical = 90). Equal to angle_v.z
 };
 
 class Airplane{
     public:
-            float anglegyro; //angle calculated (for debugging gyro rate only)
+        uint16_t dt; //step time (microseconds) //save 30 bytes by changing from long to int
+        unsigned long t_prev; //previous iteration time (micros)
+
+        float anglegyro; //angle calculated (for debugging gyro rate only)
         Airplane(); //constructor
         void init(); //initialize stuff
-        void outpt();
+        //void outpt();
 
         state X; //holds the control state of the airplane
         sensordata dat; //holds onto the raw sensor values
@@ -126,13 +129,17 @@ class Airplane{
         uint8_t log_index; //recorded subsection of flight -(0-255)
         int check_batt();
                void average_gy();  //calculate the average gyro value
+               void predict_gy();   //calculate the predicted gyro value
+               void predict_servo(); //calculate the predicted servo position
+       void mode_stop();
+       void add_offset(); //add the offsets for each servo
     private:
         //Routines for different flight modes
-        void mode_stop();
+
         void mode_airplane(); //direct control of ctrl surfaces
         void mode_heli1();    //tries to fly vertical
         void mode_heli2();
-        void add_offset(); //add the offsets for each servo
+
         int limit(int value, int deg); //limit the range of servo
 
 
