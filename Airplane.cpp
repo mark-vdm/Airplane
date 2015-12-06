@@ -178,16 +178,14 @@ X.angle = dat.q;  //get angle from stored sensor value
  desired_angle();  //update the desired angle
 
     //Calculate the difference between current and desired angle
-    //Quaternion q1; //create dummy quaternion
     Quaternion q0; //create dummy quaternion
     //Quaternion q0_i; //create dummy quaternion - inverse of q0
     q0 = X.angle;
-    //q1 = X.angle_desire;
-    //q0_i = X.angle_d;
     q0 = q0.getConjugate(); //get inverse of q0
     X.angle_off_q = q0.getProduct(X.angle_desire);//q1); //operation: (q0[inverse])*q1. This gets the difference between q0 and q1 //takes 250us
 //
 
+    /* original
     q0.w = 0; //save 172 bytes by not using rotate function
     q0.x = 0;
     q0.y = 1;
@@ -197,6 +195,8 @@ X.angle = dat.q;  //get angle from stored sensor value
     X.angle_v.x = q0.x;
     X.angle_v.y = q0.y;
     X.angle_v.z = q0.z;
+    */ //end original
+
     /*
     X.angle_v.x = 0;
     X.angle_v.y = 1;
@@ -205,6 +205,7 @@ X.angle = dat.q;  //get angle from stored sensor value
 */
     //get the rotations of x,y, and z vector
     //save 400 bytes by not using the ROTATE function (it redeclares one quaternion per use)
+    /* original
     q0.w = 0;
     q0.x = 1;
     q0.y = 0;
@@ -234,6 +235,8 @@ X.angle = dat.q;  //get angle from stored sensor value
     X.z_vect.x = q0.x;
     X.z_vect.y = q0.y;
     X.z_vect.z = q0.z;
+    */ //end original//
+
     /*X.x_vect.x = 1;
     X.x_vect.y = 0;
     X.x_vect.z = 0;
@@ -247,6 +250,54 @@ X.angle = dat.q;  //get angle from stored sensor value
     X.z_vect.z = 1;
     X.z_vect.rotate(&X.angle_off_q); //'rotate' takes 300us*/
 
+    //Optimization: use for loop rather than calling 'rotate' 4 times. Saves approx 2000 bytes
+    VectorFloat dummy[4];
+    dummy[0].x = 1;
+    dummy[0].y = 0;
+    dummy[0].z = 0;
+
+    dummy[1].x = 0;
+    dummy[1].y = 1;
+    dummy[1].z = 0;
+
+    dummy[2].x = 0;
+    dummy[2].y = 0;
+    dummy[2].z = 1;
+
+    dummy[3].x = 0;
+    dummy[3].y = 1;
+    dummy[3].z = 0;
+
+    for(int i = 0; i < 4; i++){
+
+        /*
+        if(i<3)
+            dummy[i].rotate(&X.angle_off_q); //finding the axis offset from desired
+        else
+            dummy[i].rotate(&X.angle);  //find the vector pointed in y-axis of airplane
+        */
+        if(i<3)
+            q0 = X.angle_off_q;
+        else
+            q0 = X.angle;
+        dummy[i].rotate(&q0);
+    }
+
+    X.x_vect.x = dummy[0].x;
+    X.x_vect.y = dummy[0].y;
+    X.x_vect.z = dummy[0].z;
+
+    X.y_vect.x = dummy[1].x;
+    X.y_vect.y = dummy[1].y;
+    X.y_vect.z = dummy[1].z;
+
+    X.z_vect.x = dummy[2].x;
+    X.z_vect.y = dummy[2].y;
+    X.z_vect.z = dummy[2].z;
+
+    X.angle_v.x = dummy[3].x;
+    X.angle_v.y = dummy[3].y;
+    X.angle_v.z = dummy[3].z;
 
 }
 
