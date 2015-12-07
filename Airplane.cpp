@@ -66,7 +66,7 @@ void Airplane::predict_gy() //284 bytes
     K[2] = 0.8506;//constant multiplier for YAW (z axis)
     K[0] = 1.89;//constant multiplier for PITCH (x axis)
 
-    float gy_decay = 0.95; //use this value to bring the gyro value back to zero over time
+    float gy_decay = 0.99; //use this value to bring the gyro value back to zero over time
 
 //** NOTE: Multiply by 180/pi/1.5 to compare them to the DMP gyro values
     //for absolutely no reason at all, X.gy_pred[0] crashes the program. Solution: Increase array by 1 and use gy_pred[3].
@@ -80,9 +80,9 @@ void Airplane::predict_gy() //284 bytes
 
     //reset to 0 if the gyro measures zero and the predicted value is more than 1deg/s (0.017 rad/s)
     //decay the predicted gyro rate if the measured gyro is 0 OR the control surface is < 1 degree
-    float max_rate = 0.017*10; //max rate: 0.017 = 1 deg/sec
+    float max_rate = 0.017*50; //max rate: 0.017 = 1 deg/sec
     float decay_angle = 0.017*4; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
-    float prop_torque = 0.017*2; //This compensates for the propeller torque. This is guessed (I don't know how well it works)
+    float prop_torque = 0.017*5; //This compensates for the propeller torque. This is guessed (I don't know how well it works)
     if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
         X.gy_pred[3] *= gy_decay;
    }
@@ -102,6 +102,9 @@ void Airplane::predict_gy() //284 bytes
         else if (X.gy_pred[i] < -max_rate)
             X.gy_pred[i] = -max_rate;
     }
+    //limit max rate for yaw (separate because of effect of propeller torque)
+    X.gy_pred[1] = max(X.gy_pred[1],-0.017*20);
+    X.gy_pred[1] = min(X.gy_pred[1],0.017*20);
 
     //save these values
     X.angle_derivative[0] = X.gy_pred[3]; //I still don't know why gy_pred[0] is corrupted. Use [3] instead
@@ -270,8 +273,8 @@ void Airplane::mode_heli1(){
 
 
         //Make the "rotated x-axis" stay on the x-z plane.
-        float Kp = 15; //proportional gain
-        float Kd = 17; //derivative gain
+        float Kp = 10; //proportional gain
+        float Kd = 15; //derivative gain
         float Ki = 0.75; //integral gain
 
 
@@ -295,7 +298,7 @@ void Airplane::mode_heli1(){
 
         //AILERONS - fix the roll.
         Kp = 7;
-        Kd = 15;
+        Kd = 5;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
         //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
@@ -405,7 +408,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.aa.z);
             Serial.print("\t");
         }
-*/       if (select & 0x04){ //274 bytes
+       if (select & 0x04){ //274 bytes
             Serial.print("gy\t");
             Serial.print(dat.gy.x);
             Serial.print("\t");
@@ -415,19 +418,14 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("\t Gyroangle:");
             Serial.print(anglegyro);
             Serial.print("\t avg xyz:");
-            /*Serial.print(X.gy_pred[3]);
-            Serial.print("\t");
-            Serial.print(X.gy_pred[1]);
-            Serial.print("\t");
-            Serial.print(X.gy_pred[2]);*/
         }
-/*        if (select & 0x08){
+*/        if (select & 0x08){
             Serial.print("UltraB: ");
             Serial.print(dat.ult_b);
             Serial.print("\t UltraR: ");
             Serial.print(dat.ult_r);
         }
-        if (select & 0x10){     //300us
+/*        if (select & 0x10){     //300us
             Serial.print("\t mem: ");
             Serial.print(freeMemory());
         }
@@ -443,7 +441,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("\t m:");
             Serial.print(rc.mode);
         }
- */       if (select & 0x40){     //264 bytes
+        if (select & 0x40){     //264 bytes
             Serial.print("\t Servo Thr: ");
             Serial.print(servoPos[THROTTLE_ID]);
             Serial.print("\t Ail L:");

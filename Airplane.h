@@ -113,28 +113,22 @@ class Airplane{
         receiver rc;    //holds onto the raw receiver values
         void print_sensors(uint8_t select);
         int control();
- //void update_state(); //updates the state prediction
- void update_angle(); //updates the angles (vectors and stuff)
- void desired_angle(); //calculates the desired angle
-        //Servos
-        //SoftwareServo servos[5]; // throttle, ail_l, ail_r, rud, elevator
-        //Servo servos[5]; // throttle, ail_l, ail_r, rud, elevator
+
+         void update_angle(); //updates the angles (vectors and stuff)
+         void desired_angle(); //calculates the desired angle
 
         int servoPos[6];
-        //unsigned long servoTime[5]; //save the last time servo was set (ms)
-
-//        void servo_set(); //makes sure to only update the servo every 10ms
 
         int servo_offset[6]; //offsets for servos
         int servo_scaling[6]; //scaling for servo (percentage)
 
-        uint16_t flight_index; //flight number - used for data file name(0-9999)
-        uint8_t log_index; //recorded subsection of flight -(0-255)
+      //  uint16_t flight_index; //flight number - used for data file name(0-9999)
+      //  uint8_t log_index; //recorded subsection of flight -(0-255)
         int check_batt();
-               void average_gy();  //calculate the average gyro value
-               void predict_gy();   //calculate the predicted gyro value
-               void predict_servo(); //calculate the predicted servo position
-               void predict_integral(); //calculate the integral of angle offset
+       void average_gy();  //calculate the average gyro value
+       void predict_gy();   //calculate the predicted gyro value
+       void predict_servo(); //calculate the predicted servo position
+       void predict_integral(); //calculate the integral of angle offset (implemented inside mode_heli1)
        void mode_stop();
        void add_offset(); //add the offsets for each servo
     private:

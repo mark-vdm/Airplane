@@ -251,7 +251,7 @@ c = 0;
         //Serial.println(" <- time");
 
         // ULTRASONIC: send another ping if 50ms has passed since last
-/*
+
         if (millis() >= pingTimer){ //4us if all false. 500us if trigger.
             if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
                 ultra_bot.ping_timer(echoCheck);
@@ -271,7 +271,7 @@ c = 0;
         if (!ultra_rear.ping_result){
             a.dat.ult_r = 0;
         }
-*/
+
         //delay(100);
 
 
@@ -303,7 +303,7 @@ c = 0;
     //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    a.print_sensors(0x04); //takes up 1000 bytes of program memory
+    a.print_sensors(0x08); //takes up 1000 bytes of program memory
 
 
     a.check_batt(); //150 bytes
