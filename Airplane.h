@@ -19,8 +19,8 @@ extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main fi
 #define AIL_L_ID   1
 #define RUDDER_ID  2
 #define ELEVATOR_ID 3
-#define SERVO_FRAME_SPACE 4
-#define SERVO_FRAME_SPACE2 6
+//#define SERVO_FRAME_SPACE 4
+//#define SERVO_FRAME_SPACE2 6
 
 //Flight Modes
 #define error_max 5  //the maximum error in the value 'mode' allowed
@@ -77,6 +77,9 @@ struct state{ //stores the control system states
     VectorFloat x_vect;
     VectorFloat y_vect;
     VectorFloat z_vect;
+    float angle_integral[3]; //saves the integral of angle
+    float angle_proportional[3];     //saves the proportional offset of angle
+    float angle_derivative[3];    //saves the derivative offset of angle same as gy_pred
 
 /*
     VectorInt16 pos_g;     //global position [mm]
@@ -109,7 +112,7 @@ class Airplane{
         sensordata dat; //holds onto the raw sensor values
         receiver rc;    //holds onto the raw receiver values
         void print_sensors(uint8_t select);
- int control();
+        int control();
  //void update_state(); //updates the state prediction
  void update_angle(); //updates the angles (vectors and stuff)
  void desired_angle(); //calculates the desired angle
@@ -131,6 +134,7 @@ class Airplane{
                void average_gy();  //calculate the average gyro value
                void predict_gy();   //calculate the predicted gyro value
                void predict_servo(); //calculate the predicted servo position
+               void predict_integral(); //calculate the integral of angle offset
        void mode_stop();
        void add_offset(); //add the offsets for each servo
     private:

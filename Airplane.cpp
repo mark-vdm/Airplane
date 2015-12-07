@@ -61,7 +61,7 @@ void Airplane::predict_servo()
 void Airplane::predict_gy() //284 bytes
 {
     //predict the rate of rotation based on the flap angles
-    float K[3]; //constant multiplier:
+    float K[3]; //constant multiplier: See matlab implementation.
     K[1] = 1.918/2.0;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
     K[2] = 0.8506;//constant multiplier for YAW (z axis)
     K[0] = 1.89;//constant multiplier for PITCH (x axis)
@@ -82,16 +82,17 @@ void Airplane::predict_gy() //284 bytes
     //decay the predicted gyro rate if the measured gyro is 0 OR the control surface is < 1 degree
     float max_rate = 0.017*10; //max rate: 0.017 = 1 deg/sec
     float decay_angle = 0.017*4; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
+    float prop_torque = 0.017*2; //This compensates for the propeller torque. This is guessed (I don't know how well it works)
     if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
         X.gy_pred[3] *= gy_decay;
    }
     if(abs(X.servo_pred[RUDDER_ID]) < decay_angle && (abs(X.gy_pred[2]) > 0.017*3))
         X.gy_pred[2] *= gy_decay;
-    if(abs(X.servo_pred[AIL_R_ID]) < decay_angle && (abs(X.gy_pred[1] + 0.017*2) > 0.017*3)) //add the 0.017*2 offset of the prop torque
+    if(abs(X.servo_pred[AIL_R_ID]) < decay_angle && (abs(X.gy_pred[1] + prop_torque) > 0.017*3)) //add the 0.017*2 offset of the prop torque (random guess = rad/s^2)
         X.gy_pred[1] *= gy_decay;
 
     //add the motor torque offset to y-axis
-    X.gy_pred[1] -= (dt/1000000.0)*0.017*2; //guess: motor is applying 2deg/s rotation
+    X.gy_pred[1] -= (dt/1000000.0)*prop_torque; //guess: motor is applying 2deg/s rotation
 
     //make sure each value is less than 180deg/s = 3.14
     for(int i = 1; i < 4; i++)
@@ -101,45 +102,13 @@ void Airplane::predict_gy() //284 bytes
         else if (X.gy_pred[i] < -max_rate)
             X.gy_pred[i] = -max_rate;
     }
+
+    //save these values
+    X.angle_derivative[0] = X.gy_pred[3]; //I still don't know why gy_pred[0] is corrupted. Use [3] instead
+    X.angle_derivative[1] = X.gy_pred[1];
+    X.angle_derivative[2] = X.gy_pred[2];
+
 }
-/*void Airplane::average_gy()
-{
-    dat.gy_av.x = 0;
-    dat.gy_av.y = 0;
-    dat.gy_av.z = 0;
-    uint8_t resetx = 0;
-    uint8_t resety = 0;
-    uint8_t resetz = 0;
-    //Calculate the average gyro values. Reset to 0 if any value is 0
-    for(int i = 0; i< dat.gy_ar_size; i++){
-        dat.gy_av.x += dat.gy_array[i].x;
-        dat.gy_av.y += dat.gy_array[i].y;
-        dat.gy_av.z += dat.gy_array[i].z;
-
-        if(dat.gy_array[i].x == 0) //check if there were any zero vlues
-            resetx ++;
-        if(dat.gy_array[i].y == 0)
-            resety ++;
-        if(dat.gy_array[i].z == 0)
-            resetz ++;
-    }
-    if(resetx)
-        dat.gy_av.x = 0;
-    else
-        dat.gy_av.x /= dat.gy_ar_size;
-    if(resety)
-        dat.gy_av.y = 0;
-    else
-        dat.gy_av.y /= dat.gy_ar_size;
-    if(resetz)
-        dat.gy_av.z = 0;
-    else
-        dat.gy_av.z /= dat.gy_ar_size;
-
-    dat.gy_av.x /= dat.gy_ar_size;
-    dat.gy_av.y /= dat.gy_ar_size;
-    dat.gy_av.z /= dat.gy_ar_size;
-}*/
 void Airplane::desired_angle()
 {
     //calculate the desired angle
@@ -183,74 +152,8 @@ X.angle = dat.q;  //get angle from stored sensor value
     q0 = X.angle;
     q0 = q0.getConjugate(); //get inverse of q0
     X.angle_off_q = q0.getProduct(X.angle_desire);//q1); //operation: (q0[inverse])*q1. This gets the difference between q0 and q1 //takes 250us
-//
 
-    /* original
-    q0.w = 0; //save 172 bytes by not using rotate function
-    q0.x = 0;
-    q0.y = 1;
-    q0.z = 0;
-    q0 = X.angle.getProduct(q0);
-    q0 = q0.getProduct(X.angle.getConjugate());
-    X.angle_v.x = q0.x;
-    X.angle_v.y = q0.y;
-    X.angle_v.z = q0.z;
-    */ //end original
-
-    /*
-    X.angle_v.x = 0;
-    X.angle_v.y = 1;
-    X.angle_v.z = 0;
-    X.angle_v.rotate(&X.angle); //convert the angle of airplane to vector form (ignores yaw) //'rotate' takes 300us
-*/
-    //get the rotations of x,y, and z vector
-    //save 400 bytes by not using the ROTATE function (it redeclares one quaternion per use)
-    /* original
-    q0.w = 0;
-    q0.x = 1;
-    q0.y = 0;
-    q0.z = 0;
-    q0 = X.angle_off_q.getProduct(q0);
-    q0 = q0.getProduct(X.angle_off_q.getConjugate());
-    X.x_vect.x = q0.x;
-    X.x_vect.y = q0.y;
-    X.x_vect.z = q0.z;
-
-    q0.w = 0;
-    q0.x = 0;
-    q0.y = 1;
-    q0.z = 0;
-    q0 = X.angle_off_q.getProduct(q0);
-    q0 = q0.getProduct(X.angle_off_q.getConjugate());
-    X.y_vect.x = q0.x;
-    X.y_vect.y = q0.y;
-    X.y_vect.z = q0.z;
-
-    q0.w = 0;
-    q0.x = 0;
-    q0.y = 0;
-    q0.z = 1;
-    q0 = X.angle_off_q.getProduct(q0);
-    q0 = q0.getProduct(X.angle_off_q.getConjugate());
-    X.z_vect.x = q0.x;
-    X.z_vect.y = q0.y;
-    X.z_vect.z = q0.z;
-    */ //end original//
-
-    /*X.x_vect.x = 1;
-    X.x_vect.y = 0;
-    X.x_vect.z = 0;
-    X.x_vect.rotate(&X.angle_off_q); //'rotate' takes 300us and 1000bytes
-    X.y_vect.x = 0;
-    X.y_vect.y = 1;
-    X.y_vect.z = 0;
-    X.y_vect.rotate(&X.angle_off_q); //'rotate' takes 300us
-    X.z_vect.x = 0;
-    X.z_vect.y = 0;
-    X.z_vect.z = 1;
-    X.z_vect.rotate(&X.angle_off_q); //'rotate' takes 300us*/
-
-    //Optimization: use for loop rather than calling 'rotate' 4 times. Saves approx 2000 bytes
+    //Optimization: use FOR loop rather than calling 'rotate' 4 times. Saves approx 2000 bytes
     VectorFloat dummy[4];
     dummy[0].x = 1;
     dummy[0].y = 0;
@@ -269,13 +172,6 @@ X.angle = dat.q;  //get angle from stored sensor value
     dummy[3].z = 0;
 
     for(int i = 0; i < 4; i++){
-
-        /*
-        if(i<3)
-            dummy[i].rotate(&X.angle_off_q); //finding the axis offset from desired
-        else
-            dummy[i].rotate(&X.angle);  //find the vector pointed in y-axis of airplane
-        */
         if(i<3)
             q0 = X.angle_off_q;
         else
@@ -348,31 +244,63 @@ void Airplane::mode_heli1(){
         //Rotate the x-axis by the angle.
         float dum = sqrt(pow(X.x_vect.x,2)+ pow(X.x_vect.z,2));   //This approaches 1 when the axis is parallel to x-axis. 0 if parallel to z-axis ORIGINAL
         float dum2 = sqrt(pow(X.z_vect.x,2)+ pow(X.z_vect.z,2));  //ORIGINAL
+        X.angle_proportional[2] = -(X.x_vect.y*X.x_vect.x/dum+X.z_vect.y*X.z_vect.x/dum2); //save the proportional offset of angle in z-axis for rudder
+        X.angle_proportional[0] = (X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //save the proportional offset of angle in x-axis for elevator
+        X.angle_proportional[1] = X.x_vect.z; //angle offset in y-axis is how much the x_vector is off of the x-y plane. (should actually be sin() of this or something)
+
+        //calculate the integrals
+        X.angle_integral[0] += X.angle_proportional[0]* dt/1000000.0; //dt is in microseconds, 1000 000 microseconds in 1 second
+        X.angle_integral[1] += X.angle_proportional[1]* dt/1000000.0;
+        X.angle_integral[2] += X.angle_proportional[2]* dt/1000000.0;
+        //reset the integral with hysterisys - if it is opposite sign and actual offset is > 5 degrees
+        float max_angle = 0.01745 * 10; //max angle (radians) after which the integral component is reset
+        float max_hyst = 0.01745 * 5;  //reset (using hysteresis) if integral is AIDING it from going away from zero
+        float max_int = 0.01745 * 10; //max value of integral (so it doesn't wander to infinity)
+        float int_decay = 0.8;
+        for(int i = 0; i < 3; i++){
+            if(abs(X.angle_proportional[i]) > max_angle) //ignore if beyond max angle
+                X.angle_integral[i] *= int_decay;
+            if(X.angle_integral[i] > 0 && X.angle_proportional[i] < -max_hyst) //ignore if integral pushes angle away from zero (with hysteresis)
+                X.angle_integral[i] *= int_decay;
+            if(X.angle_integral[i] < 0 && X.angle_proportional[i] > max_hyst) //ignore if integral pushes angle away from zero (with hysteresis)
+                X.angle_integral[i] *= int_decay;
+            X.angle_integral[i] = max(X.angle_integral[i],-max_int); //limit the integral value
+            X.angle_integral[i] = min(X.angle_integral[i],max_int);
+        }
+
+
         //Make the "rotated x-axis" stay on the x-z plane.
         float Kp = 15; //proportional gain
         float Kd = 17; //derivative gain
-        float Ki = 0; //integral gain
-        float ctrl = Kp * -(X.x_vect.y*X.x_vect.x/dum+X.z_vect.y*X.z_vect.x/dum2); //X.x_vect.y is between -1,1. Scale this to 1000,2000
+        float Ki = 0.75; //integral gain
+
+
+        float ctrl = Kp * X.angle_proportional[2];
         //Derivative Control - rate of rotation in the z-axis
         //Get the rate of rotation in z-axis. use gy_av for the average rate of rotation (because min sensitivity of sensor is 3deg/s0
 //        ctrl = ctrl + Kd*dat.gy_av.z*(1.5/1.0)*(PI/180.0); //add the derivative control (or more precisely: subtract it) 32768 is equal to 250 deg/second rotation. 1deg = pi/180 rad
-        ctrl = ctrl + Kd*X.gy_pred[2];
+        ctrl = ctrl + Kd*X.angle_derivative[2];//X.gy_pred[2]; //derivative control
+        ctrl = ctrl + Ki*X.angle_integral[2]; //integral control
         ctrl = ctrl*500 + 1500; //Shift to between 1000,2000
         servoPos[RUDDER_ID] = limit(ctrl,42);
 
         //ELEVATOR - same as rudder, but x and z swapped in 'x_vect.x' > 'x_vect.z'
-        ctrl = Kp * (X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //proportional
+
+        ctrl = Kp * X.angle_proportional[0]; //(X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //proportional
         //ctrl = ctrl + Kd * dat.gy_av.x*(1.5/1.0)*(PI/180.0);                                      //derivative
-        ctrl = ctrl + Kd * X.gy_pred[3];  //derivative - predicted gyro in the x-axis
+        ctrl = ctrl + Kd * X.angle_derivative[0];//X.gy_pred[3];  //derivative - predicted gyro in the x-axis
+        ctrl = ctrl + Ki*X.angle_integral[0]; //integral -
         ctrl = ctrl*500 + 1500;
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
 
         //AILERONS - fix the roll.
         Kp = 7;
         Kd = 15;
-        ctrl = Kp * X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
+
+        ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
         //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
-        ctrl = ctrl + Kd * X.gy_pred[1];
+        ctrl = ctrl + Kd * X.angle_derivative[1];//X.gy_pred[1];
+        //ctrl = ctrl + Ki*X.angle_integral[1]; //don't use integral gain for roll
         ctrl = ctrl*500 + 1500;
         servoPos[AIL_L_ID] = limit(ctrl,30);
         servoPos[AIL_R_ID] = limit(ctrl,30);
@@ -399,15 +327,18 @@ int Airplane::limit(int value, int deg){
     return value;
 }
 
+
 int Airplane::control(){
     //This is the main control algorithm for the airplane. Call every cycle
     //update the time
     dt = micros() - t_prev;
+    t_prev = micros();
     if(dt > 15000)
         dt = 0; //reset to zero if hte micros() counter rolls over
     predict_servo(); //predict the current servo position [rad]
     predict_gy();   //predict the current gyro rate [rad/s]*10000
-    t_prev = micros();
+    //predict_integral();    //integrate the angle offset of airplane
+
     int servoPosPrev[5];
 
 
