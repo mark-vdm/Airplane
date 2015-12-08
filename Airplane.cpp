@@ -298,7 +298,7 @@ void Airplane::mode_heli1(){
 
         //AILERONS - fix the roll.
         Kp = 7;
-        Kd = 5;
+        Kd = 10;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
         //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
