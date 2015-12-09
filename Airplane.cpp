@@ -10,7 +10,7 @@ Airplane::Airplane(){
     rc.throttle = 1000;
 
     //set the servo offsets for each servo
-    servo_offset[AIL_R_ID]=-120-300; //
+    servo_offset[AIL_R_ID]=-120-250; //
     servo_offset[AIL_L_ID]=-240 +300;
     servo_offset[RUDDER_ID]=240;
     servo_offset[ELEVATOR_ID]=-80 + 230; //offset to zero servo, + offset to make elevator zero
@@ -27,6 +27,12 @@ Airplane::Airplane(){
         servoPos[i] = 1500;
     }
     servoPos[5] = 1000; //set the throttle to 0
+
+    //multiply these values by 1.5 - smaller prop = higher airspeed = higher force
+    //increasing this INCREASES the effect of the derivative gain - flap will move less
+    X.K[1] = 1.918/2.0 * 2.5;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
+    X.K[2] = 0.8506 * 2;//constant multiplier for YAW (z axis)
+    X.K[0] = 1.89 * 2;//constant multiplier for PITCH (x axis)
 
 //    dat.gy_ar_index = 0;
 //    dat.gy_ar_size = 10;
@@ -54,54 +60,60 @@ void Airplane::predict_servo()
                 X.servo_pred[i] -= 500*PI/180.0 * dt/1000000.0;
         }
         //make sure servo prediction doesn't go beyond limit of 30 degrees
-        X.servo_pred[i] = max(X.servo_pred[i],-30*PI/180.0);
-        X.servo_pred[i] = min(X.servo_pred[i],30*PI/180.0);
+        X.servo_pred[i] = max(X.servo_pred[i],-35*PI/180.0);
+        X.servo_pred[i] = min(X.servo_pred[i],35*PI/180.0);
     }
 }
 void Airplane::predict_gy() //284 bytes
 {
     //predict the rate of rotation based on the flap angles
-    float K[3]; //constant multiplier: See matlab implementation.
-    K[1] = 1.918/2.0;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
-    K[2] = 0.8506;//constant multiplier for YAW (z axis)
-    K[0] = 1.89;//constant multiplier for PITCH (x axis)
-
+    //X.K[] are the values for converting angle of flap to rate of rotation. Rotation rate = F*r/I.
+    // F = 1/2*Cl*A*V^2
+    // r = distance from CG
+    // I = moment of inertia
+    // After using the smaller prop, the Velocity might have increased a lot.
     float gy_decay = 0.99; //use this value to bring the gyro value back to zero over time
+    //reset to 0 if the gyro measures zero and the predicted value is more than 1deg/s (0.017 rad/s)
+    //decay the predicted gyro rate if the measured gyro is 0 OR the control surface is < 1 degree
+    float max_rate = 0.017*150; //max rate: 0.017 = 1 deg/sec
+    float decay_angle = 0.017*3; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
+
 
 //** NOTE: Multiply by 180/pi/1.5 to compare them to the DMP gyro values
     //for absolutely no reason at all, X.gy_pred[0] crashes the program. Solution: Increase array by 1 and use gy_pred[3].
-    X.gy_pred[3] -= (dt/1000000.0)*K[0]*X.servo_pred[ELEVATOR_ID]; //gy x axis, using ELEVATOR servo
-    X.gy_pred[2] -= (dt/1000000.0)*K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo
+
+
+    X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*X.servo_pred[ELEVATOR_ID]; //gy x axis, using ELEVATOR servo
+    X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo
+
 
     //For ailerons, the motor is applying a torque (negative). Add this to the predicted gyro rate
-    X.gy_pred[1] -= (dt/1000000.0)*K[1]*X.servo_pred[AIL_R_ID]; //gy y axis, using AILERON servo
+    float prop_torque = X.K[1] * 0.017*2; //This compensates for the propeller torque. This is guessed - close to the force of aileron at 30 degrees
+    X.gy_pred[1] = X.angle_derivative[1] - (dt/1000000.0)*X.K[1]*(X.servo_pred[AIL_R_ID] + 0.017*10); //gy y axis, using AILERON servo
+   // X.gy_pred[1] -= (dt/1000000.0)*prop_torque; //guess: motor is applying 2deg/s rotation
 
 
 
-    //reset to 0 if the gyro measures zero and the predicted value is more than 1deg/s (0.017 rad/s)
-    //decay the predicted gyro rate if the measured gyro is 0 OR the control surface is < 1 degree
-    float max_rate = 0.017*50; //max rate: 0.017 = 1 deg/sec
-    float decay_angle = 0.017*4; //angle of control surface at which the rate will decay (to zero it at control surface = straight)
-    float prop_torque = 0.017*5; //This compensates for the propeller torque. This is guessed (I don't know how well it works)
-    if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
+
+   /* if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
         X.gy_pred[3] *= gy_decay;
    }
     if(abs(X.servo_pred[RUDDER_ID]) < decay_angle && (abs(X.gy_pred[2]) > 0.017*3))
         X.gy_pred[2] *= gy_decay;
-    if(abs(X.servo_pred[AIL_R_ID]) < decay_angle && (abs(X.gy_pred[1] + prop_torque) > 0.017*3)) //add the 0.017*2 offset of the prop torque (random guess = rad/s^2)
-        X.gy_pred[1] *= gy_decay;
 
-    //add the motor torque offset to y-axis
-    X.gy_pred[1] -= (dt/1000000.0)*prop_torque; //guess: motor is applying 2deg/s rotation
+
+   if(abs(X.servo_pred[AIL_R_ID] - prop_torque) < decay_angle && (abs(X.gy_pred[1] + prop_torque) > 0.017*3)) //add the 0.017*2 offset of the prop torque (random guess = rad/s^2)
+        X.gy_pred[1] *= gy_decay;
+*/
+
 
     //make sure each value is less than 180deg/s = 3.14
-    for(int i = 1; i < 4; i++)
+  /*  for(int i = 1; i < 4; i++) //removed - use the max_rate as the sensor value. //136 bytes
     {
-        if (X.gy_pred[i] > max_rate)
-            X.gy_pred[i] = max_rate;
-        else if (X.gy_pred[i] < -max_rate)
-            X.gy_pred[i] = -max_rate;
+        X.gy_pred[i] = max(X.gy_pred[i],-max_rate);
+        X.gy_pred[i] = min(X.gy_pred[i],max_rate);
     }
+*/
     //limit max rate for yaw (separate because of effect of propeller torque)
     X.gy_pred[1] = max(X.gy_pred[1],-0.017*20);
     X.gy_pred[1] = min(X.gy_pred[1],0.017*20);
@@ -110,6 +122,43 @@ void Airplane::predict_gy() //284 bytes
     X.angle_derivative[0] = X.gy_pred[3]; //I still don't know why gy_pred[0] is corrupted. Use [3] instead
     X.angle_derivative[1] = X.gy_pred[1];
     X.angle_derivative[2] = X.gy_pred[2];
+
+
+    //dat.gy = dmpGetGyro() <- gets the gyro rate from dmp (resolution = 2000deg/s). Multiply by 1.5 to get deg/s. Multiply by 0.026 to get rad/s
+    //Min resolution of gyro: 1.5 deg/s
+    //Limit the predicted gyro rate to the measured gyro rate IF the measured rate > 1.5*4 deg/s. Else, limit to 1.5*4 deg/s
+    //What if the predicted gyro is way too low because of bad model?
+    //To be smart: If the gyro rate is... 1.5*50 deg/s, assume gyro is good. Correct the scaling factor of the predicted gyro rate
+    float dum[3];
+    dum[0] = dat.gy.x;// * 1.5* PI / 180; //convert gyro rate to rad/s. (multiply by 1.5 gives deg/s)
+    dum[1] = dat.gy.y;// * 1.5* PI / 180;
+    dum[2] = dat.gy.z;// * 1.5* PI / 180;
+    for(int i = 0; i<3; i++){
+        dum[i] *= 1.5*PI/180.0; //save 86 bytes by putting this here instead of outside for loop
+
+        //PROBLEM: This will cause bad stuff to happen if the airplane is not flying freely in the air.
+        //if(abs(dum[i]) > 0.01745*40 && abs(dum[i]) < max_rate && abs((dum[i]-X.angle_derivative[i])/X.angle_derivative[i]) > 0.2){ //check if sensor is 20% different than predicted //334 bytes
+        //    X.angle_derivative[i] = dum[i];
+        //    //Modify the K value so the predicted derivative will be better next time
+        //    X.K[i] = abs(dum[i]/X.angle_derivative[i] * X.K[i]);
+        //}
+
+/*
+        if(abs(dum[i]) > 0.01745*15){ //check if sensor rate is > 10 deg/s. This means sensor value should be ok //182 bytes
+            //Make sure the predicted value is less than this
+            max_rate = abs(dum[i]);
+            //X.angle_derivative[i] = dum[i];
+        }
+        //if sensor rate is < 10 deg/s, then make sure the predicted value is less than 10deg/s
+        else{
+            max_rate = 0.01745*15;
+        }
+*/
+        max_rate = 0.01745*15;
+        X.angle_derivative[i] = min(X.angle_derivative[i], max_rate);
+        X.angle_derivative[i] = max(X.angle_derivative[i], -max_rate);
+    }
+
 
 }
 void Airplane::desired_angle()
@@ -259,7 +308,7 @@ void Airplane::mode_heli1(){
         float max_angle = 0.01745 * 10; //max angle (radians) after which the integral component is reset
         float max_hyst = 0.01745 * 5;  //reset (using hysteresis) if integral is AIDING it from going away from zero
         float max_int = 0.01745 * 10; //max value of integral (so it doesn't wander to infinity)
-        float int_decay = 0.8;
+        float int_decay = 0.5;
         for(int i = 0; i < 3; i++){
             if(abs(X.angle_proportional[i]) > max_angle) //ignore if beyond max angle
                 X.angle_integral[i] *= int_decay;
@@ -297,7 +346,7 @@ void Airplane::mode_heli1(){
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
 
         //AILERONS - fix the roll.
-        Kp = 7;
+        Kp = 5;
         Kd = 10;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
@@ -305,8 +354,8 @@ void Airplane::mode_heli1(){
         ctrl = ctrl + Kd * X.angle_derivative[1];//X.gy_pred[1];
         //ctrl = ctrl + Ki*X.angle_integral[1]; //don't use integral gain for roll
         ctrl = ctrl*500 + 1500;
-        servoPos[AIL_L_ID] = limit(ctrl,30);
-        servoPos[AIL_R_ID] = limit(ctrl,30);
+        servoPos[AIL_L_ID] = limit(ctrl,33);
+        servoPos[AIL_R_ID] = limit(ctrl,33);
 
         //get the throttle from receiver
         servoPos[THROTTLE_ID] = limit(rc.throttle,50);
@@ -408,18 +457,18 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.aa.z);
             Serial.print("\t");
         }
-       if (select & 0x04){ //274 bytes
+*/       if (select & 0x04){ //274 bytes
             Serial.print("gy\t");
             Serial.print(dat.gy.x);
             Serial.print("\t");
             Serial.print(dat.gy.y);
             Serial.print("\t");
             Serial.print(dat.gy.z);
-            Serial.print("\t Gyroangle:");
-            Serial.print(anglegyro);
-            Serial.print("\t avg xyz:");
+//            Serial.print("\t Gyroangle:");
+//            Serial.print(anglegyro);
+//            Serial.print("\t avg xyz:");
         }
-*/        if (select & 0x08){
+/*        if (select & 0x08){
             Serial.print("UltraB: ");
             Serial.print(dat.ult_b);
             Serial.print("\t UltraR: ");

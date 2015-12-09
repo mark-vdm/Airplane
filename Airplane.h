@@ -95,6 +95,7 @@ struct state{ //stores the control system states
 */
     float servo_pred[4];          //stores the current position of each servo [rad]
     float gy_pred[4];       //predicted rate of rotation [rad/s] //16 bytes
+    float K[3];             //gain value for converting angle of flap to predicted rate of rotation (see derivation in matlab/scratch notes)
     //float incline;  //This is the inclination of the airplane (angle from horizontal) (horizontal = 0, vertical = 90). Equal to angle_v.z
 };
 

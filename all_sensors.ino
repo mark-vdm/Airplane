@@ -303,7 +303,7 @@ c = 0;
     //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    a.print_sensors(0x08); //takes up 1000 bytes of program memory
+    a.print_sensors(0x04); //takes up 1000 bytes of program memory
 
 
     a.check_batt(); //150 bytes
@@ -392,11 +392,11 @@ int initialize_imu(){
 //    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
 
-    // supply your own gyro offsets here, scaled for min sensitivity
-    mpu.setXGyroOffset(0);
-    mpu.setYGyroOffset(0);
-    mpu.setZGyroOffset(0);
-    mpu.setZAccelOffset(1688); // 1688 factory default for my test chip
+    // supply your own gyro offsets here, scaled for min sensitivity. (Change these values until the dmpGetGy() values start at 0)
+    mpu.setXGyroOffset(105);
+    mpu.setYGyroOffset(20);
+    mpu.setZGyroOffset(-5);
+    mpu.setZAccelOffset(1688); // 1688 factory default for my test chip (cancels effect of gravity?)
 
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
