@@ -289,23 +289,31 @@ void Airplane::mode_heli2(){
         else
             current_angle = PI-current_angle;
     }
-Serial.println(current_angle);
+
     if(X.calib_flag){ //144 bytes (+118bytes prop torque limiting)
-        float difference_angle = X.calib_angle - current_angle;
-        if(abs(difference_angle > 0.01745*10)){ //if it has moved 10 degrees, reset stuff
-            if(difference_angle > 0 && X.prop_torque > 0.01745*10){ //if angle is positive, reduce prop torque offset. Make sure it is greater than 10 degrees
-                X.prop_torque -= 0.01745*5;
-                X.calib_flag = 0;
-            }else if(X.prop_torque < 0.01745*30){ //angle is negative, increase prop torque offset. Make sure it is less than 30 degrees
-                X.prop_torque += 0.01745*5;
-                X.calib_flag = 0;
+        float difference_angle = current_angle - X.calib_angle;
+        while(difference_angle > PI/1.5)
+            difference_angle -= PI;
+        while(difference_angle < -PI/1.5){
+            Serial.println(difference_angle);
+            difference_angle += PI;
+            Serial.println(difference_angle);
+        }
+        if(abs(difference_angle) > 0.01745*10){ //if it has moved 10 degrees, reset stuff
+            if(difference_angle > 0){ //if angle is positive, reduce prop torque offset.
+                X.prop_torque -= (0.01745*2*100)/float(millis() - X.calib_t); //multiply by the inverse of the time it takes to move the 20 degrees
+            }else{ //angle is negative, increase prop torque offset. Make sure it is less than 30 degrees
+                X.prop_torque += (0.01745*2*100)/float(millis() - X.calib_t);
             }
+            X.calib_flag = 0;
+            X.prop_torque = min(X.prop_torque, 0.01745*30);
+            X.prop_torque = max(X.prop_torque, 0.01745*10);//Make sure it is greater than 10 degrees
         }
     }else{ //if calibration is complete, start new calibration
         //reset angle
         X.calib_angle = current_angle;
         //reset time
-        X.calib_t = micros(); //20 bytes
+        X.calib_t = millis(); //20 bytes
         //Set the X.calib_flag to 1, indicating calibration in progress
         X.calib_flag = 1;     //22 bytes
     }

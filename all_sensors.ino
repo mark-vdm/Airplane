@@ -317,7 +317,7 @@ c = 0;
     //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    a.print_sensors(0x04); //takes up 1000 bytes of program memory
+    //a.print_sensors(0x04); //takes up 1000 bytes of program memory
 
 
     a.check_batt(); //150 bytes
