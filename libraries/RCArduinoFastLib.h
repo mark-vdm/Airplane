@@ -8,7 +8,7 @@
 #include "Arduino.h"
 
 // COMMENT OR UNCOMMENT THIS LINE TO ENABLE THE SECOND BANK OF SERVOS
-#define MORE_SERVOS_PLEASE 1
+//#define MORE_SERVOS_PLEASE 1  //uncommented if ESC on separate part
 
 // the first bank of servos uses OC1A - this will disable PWM on digital pin 9 - a small price for 10 fast and smooth servos
 // the second bank of servos uses OC1B - this will disable PWM on digital pin 10 - a small price for 10 more fast and smooth servos
@@ -26,7 +26,7 @@
 // for 50 hz, the pause should be to (20,000 - (RC_CHANNEL_OUT_COUNT * 2000))
 
 // Change to set the number of servos/ESCs
-#define RC_CHANNEL_OUT_COUNT 5
+#define RC_CHANNEL_OUT_COUNT 6 //for 4 servos = 5. For 4 servos + 1 esc = 6
 
 #if defined (MORE_SERVOS_PLEASE)
 #define RCARDUINO_MAX_SERVOS (RC_CHANNEL_OUT_COUNT*2)

@@ -357,7 +357,8 @@ uint8_t MPU6050::dmpInitialize() {
     DEBUG_PRINTLN(otpValid ? F("valid!") : F("invalid!"));
 
     // get X/Y/Z gyro offsets
-    DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
+
+    /*DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
     int8_t xgOffsetTC = getXGyroOffsetTC();
     int8_t ygOffsetTC = getYGyroOffsetTC();
     int8_t zgOffsetTC = getZGyroOffsetTC();
@@ -367,22 +368,22 @@ uint8_t MPU6050::dmpInitialize() {
     DEBUG_PRINTLN(ygOffsetTC);
     DEBUG_PRINT(F("Z gyro offset = "));
     DEBUG_PRINTLN(zgOffsetTC);
-
+*/
     // setup weird slave stuff (?)
-    DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
+    //DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
     setSlaveAddress(0, 0x7F);
-    DEBUG_PRINTLN(F("Disabling I2C Master mode..."));
+    //DEBUG_PRINTLN(F("Disabling I2C Master mode..."));
     setI2CMasterModeEnabled(false);
-    DEBUG_PRINTLN(F("Setting slave 0 address to 0x68 (self)..."));
+    //DEBUG_PRINTLN(F("Setting slave 0 address to 0x68 (self)..."));
     setSlaveAddress(0, 0x68);
-    DEBUG_PRINTLN(F("Resetting I2C Master control..."));
+    //DEBUG_PRINTLN(F("Resetting I2C Master control..."));
     resetI2CMaster();
     delay(20);
 
     // load DMP code into memory banks
-    DEBUG_PRINT(F("Writing DMP code to MPU memory banks ("));
-    DEBUG_PRINT(MPU6050_DMP_CODE_SIZE);
-    DEBUG_PRINTLN(F(" bytes)"));
+    //DEBUG_PRINT(F("Writing DMP code to MPU memory banks ("));
+    //DEBUG_PRINT(MPU6050_DMP_CODE_SIZE);
+    //DEBUG_PRINTLN(F(" bytes)"));
     if (writeProgMemoryBlock(dmpMemory, MPU6050_DMP_CODE_SIZE)) {
         DEBUG_PRINTLN(F("Success! DMP code written and verified."));
 
@@ -391,21 +392,21 @@ uint8_t MPU6050::dmpInitialize() {
         DEBUG_PRINT(MPU6050_DMP_CONFIG_SIZE);
         DEBUG_PRINTLN(F(" bytes in config def)"));
         if (writeProgDMPConfigurationSet(dmpConfig, MPU6050_DMP_CONFIG_SIZE)) {
-            DEBUG_PRINTLN(F("Success! DMP configuration written and verified."));
+            //DEBUG_PRINTLN(F("Success! DMP configuration written and verified."));
 
-            DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
+            //DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
             setClockSource(MPU6050_CLOCK_PLL_ZGYRO);
 
-            DEBUG_PRINTLN(F("Setting DMP and FIFO_OFLOW interrupts enabled..."));
+            //DEBUG_PRINTLN(F("Setting DMP and FIFO_OFLOW interrupts enabled..."));
             setIntEnabled(0x12);
 
-            DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
+            //DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
             setRate(4); // 1khz / (1 + 4) = 200 Hz
 
-            DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
+            //DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
             setExternalFrameSync(MPU6050_EXT_SYNC_TEMP_OUT_L);
 
-            DEBUG_PRINTLN(F("Setting DLPF bandwidth to 42Hz..."));
+            //DEBUG_PRINTLN(F("Setting DLPF bandwidth to 42Hz..."));
             setDLPFMode(MPU6050_DLPF_BW_42);
 
             DEBUG_PRINTLN(F("Setting gyro sensitivity to +/- 2000 deg/sec..."));
@@ -418,11 +419,11 @@ uint8_t MPU6050::dmpInitialize() {
             DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
             setOTPBankValid(false);
 
-            DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
+            /*DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
             setXGyroOffsetTC(xgOffsetTC);
             setYGyroOffsetTC(ygOffsetTC);
             setZGyroOffsetTC(zgOffsetTC);
-
+*/
             //DEBUG_PRINTLN(F("Setting X/Y/Z gyro user offsets to zero..."));
             //setXGyroOffset(0);
             //setYGyroOffset(0);

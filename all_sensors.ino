@@ -183,7 +183,7 @@ delay(100);
 
     pingTimer = millis(); //this is used for ultrasonic sensors
 
-    /////////////// Initialize SERVOS and RECEIVER //////////////////////
+    /*/////////////// Initialize SERVOS and RECEIVER ////////////////////// <- Two frame spaces, fast motor update. RC_CHANNEL_OUT_COUNT 5.
     // attach servo objects, these will generate the correct
     // pulses for driving Electronic speed controllers, servos or other devices
     // designed to interface directly with RC Receivers
@@ -201,6 +201,20 @@ delay(100);
     CRCArduinoFastServos::setFrameSpaceB(2,1*100);
     CRCArduinoFastServos::setFrameSpaceB(3,1*100);
     CRCArduinoFastServos::setFrameSpaceB(4,7*100);
+    */
+        /////////////// Initialize SERVOS and RECEIVER ////////////////////// <- One frame space, slow motor update. RC_CHANNEL_OUT_COUNT 6
+    // attach servo objects, these will generate the correct
+    // pulses for driving Electronic speed controllers, servos or other devices
+    // designed to interface directly with RC Receivers
+    CRCArduinoFastServos::attach(THROTTLE_ID,THROTTLE_OUT_PIN); //throttle servo
+    CRCArduinoFastServos::attach(AIL_R_ID,AIL_R_OUT_PIN);       //aileron servo
+    CRCArduinoFastServos::attach(AIL_L_ID,AIL_L_OUT_PIN);       //aileron servo
+    CRCArduinoFastServos::attach(RUDDER_ID,RUDDER_OUT_PIN);       //rudder servo
+    CRCArduinoFastServos::attach(ELEVATOR_ID,ELEVATOR_OUT_PIN);       //elevator servo
+
+    // lets set a standard rate of 50 Hz by setting a frame space of 10 * 2000 = 4 Servos (4*2000) + 6 times 2000
+    CRCArduinoFastServos::setFrameSpaceA(SERVO_FRAME_SPACE,10000); //20000 - 5servos*2000 = 10000 // 50Hz
+
 
 
 //*********************SERVO ENABLE*****************************//
@@ -343,15 +357,15 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
 
         // get quat, accel, and gy (raw values)
         mpu.dmpGetQuaternion(&q, fifoBuffer);
-        mpu.dmpGetAccel(&aa, fifoBuffer);
+        //mpu.dmpGetAccel(&aa, fifoBuffer);
         mpu.dmpGetGyro(&gy, fifoBuffer);
 
 
 
         //save the quaternion, accel, and gyr
         a.dat.q = q;
-        a.dat.aa = aa;
-        a.dat.gy = gy; //can't use this - not enough precision
+        //a.dat.aa = aa; //122 bytes
+        a.dat.gy = gy; //can't use this - not enough precision //122 bytes
 
 
        //calculate rough angle from the gyros

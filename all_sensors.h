@@ -49,7 +49,7 @@ volatile uint8_t bUpdateFlagsShared;
 #define RUDDER_ID  2
 #define ELEVATOR_ID 3
 #define SERVO_FRAME_SPACE 4
-#define SERVO_FRAME_SPACE2 1
+//#define SERVO_FRAME_SPACE2 1
 
 
 // These bit flags are set in bUpdateFlagsShared to indicate which

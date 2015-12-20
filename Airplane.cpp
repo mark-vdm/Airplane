@@ -30,12 +30,14 @@ Airplane::Airplane(){
 
     //multiply these values by 1.5 - smaller prop = higher airspeed = higher force
     //increasing this INCREASES the effect of the derivative gain - flap will move less
-    X.K[1] = 1.918/2.0 * 2.5;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
+    X.K[1] = 1.918 * 1.75;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
     X.K[2] = 0.8506 * 2;//constant multiplier for YAW (z axis)
     X.K[0] = 1.89 * 2;//constant multiplier for PITCH (x axis)
 
+    X.prop_torque = 0.01745*10; //angle of ailerons to cancel out prop torque (found by calibration)
 //    dat.gy_ar_index = 0;
 //    dat.gy_ar_size = 10;
+    X.calib_flag = 0;
 }
 void Airplane::init()
 {
@@ -43,28 +45,28 @@ void Airplane::init()
  //   dat.gy_ar_size = N_GY_AVERAGES;
 }
 
-void Airplane::predict_servo()
+void Airplane::predict_servo() //688 bytes
 {
     //predict servo position
     float dum; //dummy variable for converting servoPos to radians [rad] (desired servo position)
     for(int i = 0; i < 5; i ++)
     {
         //remove offsets
-        dum = (servoPos[i]  - servo_offset[i] -1500) * 30/500.0 *(PI/180.0); //1500 = 0, remove offset, -500 = -30 deg, 500 = 30 deg, deg2rad
-        if(abs(dum - X.servo_pred[i]) < abs(500*PI/180.0 * dt/1000000)) //if difference between predicted and desired is less than max rotation rate (500 deg/s) times dt
+        dum = (servoPos[i]  - servo_offset[i] -1500) * 30/500.0 *(PI/180.0); //1500 = 0, remove offset, -500 = -30 deg, 500 = 30 deg, deg2rad //94 bytes
+        if(abs(dum - X.servo_pred[i]) < abs(450*PI/180.0 * dt/1000000)) //if difference between predicted and desired is less than max rotation rate (500 deg/s) times dt
             X.servo_pred[i] = dum;
         else{
             if ((dum - X.servo_pred[i]) > 0)
-                X.servo_pred[i] += 500*PI/180.0 * dt/1000000.0; //1000000 micros in 1 second
+                X.servo_pred[i] += 450*PI/180.0 * dt/1000000.0; //1000000 micros in 1 second
             else
-                X.servo_pred[i] -= 500*PI/180.0 * dt/1000000.0;
+                X.servo_pred[i] -= 450*PI/180.0 * dt/1000000.0;
         }
         //make sure servo prediction doesn't go beyond limit of 30 degrees
-        X.servo_pred[i] = max(X.servo_pred[i],-35*PI/180.0);
+        X.servo_pred[i] = max(X.servo_pred[i],-35*PI/180.0); //58 bytes
         X.servo_pred[i] = min(X.servo_pred[i],35*PI/180.0);
     }
 }
-void Airplane::predict_gy() //284 bytes
+void Airplane::predict_gy() //388 bytes
 {
     //predict the rate of rotation based on the flap angles
     //X.K[] are the values for converting angle of flap to rate of rotation. Rotation rate = F*r/I.
@@ -87,33 +89,18 @@ void Airplane::predict_gy() //284 bytes
     X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo
 
 
-    //For ailerons, the motor is applying a torque (negative). Add this to the predicted gyro rate
-    float prop_torque = X.K[1] * 0.017*2; //This compensates for the propeller torque. This is guessed - close to the force of aileron at 30 degrees
-    X.gy_pred[1] = X.angle_derivative[1] - (dt/1000000.0)*X.K[1]*(X.servo_pred[AIL_R_ID] + 0.017*10); //gy y axis, using AILERON servo
-   // X.gy_pred[1] -= (dt/1000000.0)*prop_torque; //guess: motor is applying 2deg/s rotation
+    //For ailerons, the motor is applying a torque (negative). This is added to the angle of ailerons - NOT included in gyro rate calculation
+    //float prop_torque = X.K[1] * 0.017*2; //This compensates for the propeller torque. This is guessed - close to the force of aileron at 30 degrees
+    X.gy_pred[1] = X.angle_derivative[1] - (dt/1000000.0)*X.K[1]*(X.servo_pred[AIL_R_ID] - X.prop_torque); //gy y axis, using AILERON servo. Subtract prop torque offset from the aileron angle.
 
-
-
-
-   /* if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*3)){
+    //set the gyro rate back to zero when the servo is less than 1 degree
+   if(abs(X.servo_pred[ELEVATOR_ID]) < decay_angle && (abs(X.gy_pred[3]) > 0.017*1)){
         X.gy_pred[3] *= gy_decay;
    }
-    if(abs(X.servo_pred[RUDDER_ID]) < decay_angle && (abs(X.gy_pred[2]) > 0.017*3))
+    if(abs(X.servo_pred[RUDDER_ID]) < decay_angle && (abs(X.gy_pred[2]) > 0.017*1))
         X.gy_pred[2] *= gy_decay;
 
 
-   if(abs(X.servo_pred[AIL_R_ID] - prop_torque) < decay_angle && (abs(X.gy_pred[1] + prop_torque) > 0.017*3)) //add the 0.017*2 offset of the prop torque (random guess = rad/s^2)
-        X.gy_pred[1] *= gy_decay;
-*/
-
-
-    //make sure each value is less than 180deg/s = 3.14
-  /*  for(int i = 1; i < 4; i++) //removed - use the max_rate as the sensor value. //136 bytes
-    {
-        X.gy_pred[i] = max(X.gy_pred[i],-max_rate);
-        X.gy_pred[i] = min(X.gy_pred[i],max_rate);
-    }
-*/
     //limit max rate for yaw (separate because of effect of propeller torque)
     X.gy_pred[1] = max(X.gy_pred[1],-0.017*20);
     X.gy_pred[1] = min(X.gy_pred[1],0.017*20);
@@ -134,7 +121,7 @@ void Airplane::predict_gy() //284 bytes
     dum[1] = dat.gy.y;// * 1.5* PI / 180;
     dum[2] = dat.gy.z;// * 1.5* PI / 180;
     for(int i = 0; i<3; i++){
-        dum[i] *= 1.5*PI/180.0; //save 86 bytes by putting this here instead of outside for loop
+        dum[i] *= 1.5*PI/180.0; //save 86 bytes by putting this here instead of outside for loop. Gyro sensor [rad/s]
 
         //PROBLEM: This will cause bad stuff to happen if the airplane is not flying freely in the air.
         //if(abs(dum[i]) > 0.01745*40 && abs(dum[i]) < max_rate && abs((dum[i]-X.angle_derivative[i])/X.angle_derivative[i]) > 0.2){ //check if sensor is 20% different than predicted //334 bytes
@@ -143,18 +130,18 @@ void Airplane::predict_gy() //284 bytes
         //    X.K[i] = abs(dum[i]/X.angle_derivative[i] * X.K[i]);
         //}
 
-/*
-        if(abs(dum[i]) > 0.01745*15){ //check if sensor rate is > 10 deg/s. This means sensor value should be ok //182 bytes
+
+        if(i > 1 && abs(dum[i]) > 0.01745*15){ //check if sensor rate is > 10 deg/s. This means sensor value should be ok //182 bytes
             //Make sure the predicted value is less than this
             max_rate = abs(dum[i]);
             //X.angle_derivative[i] = dum[i];
         }
         //if sensor rate is < 10 deg/s, then make sure the predicted value is less than 10deg/s
         else{
-            max_rate = 0.01745*15;
+            max_rate = 0.01745*17;
         }
-*/
-        max_rate = 0.01745*15;
+
+        //max_rate = 0.01745*15;
         X.angle_derivative[i] = min(X.angle_derivative[i], max_rate);
         X.angle_derivative[i] = max(X.angle_derivative[i], -max_rate);
     }
@@ -171,25 +158,28 @@ void Airplane::desired_angle()
    X.angle_desire.z = 0;
    X.angle_desire.normalize();  //normalize the quaternion
 
-    Quaternion input;
-    input.w = ((rc.roll-1500)/500.0)*5*PI/180.0;
-    input.x = 0;
-    input.y = 0;
-    input.z = 1;
-    X.angle_desire = X.angle_desire.getProduct(input);
+    Quaternion input[3];
+    input[0].w = ((rc.roll-1500)/500.0)*5*PI/180.0;
+    input[0].x = 0;
+    input[0].y = 0;
+    input[0].z = 1;
+    //X.angle_desire = X.angle_desire.getProduct(input); //put in for loop to reduce space
 
-    input.w = -1*((rc.pitch-1500)/500.0)*5*PI/180.0;
-    input.x = 1;
-    input.y = 0;
-    input.z = 0;
-    X.angle_desire = X.angle_desire.getProduct(input);
+    input[1].w = -1*((rc.pitch-1500)/500.0)*5*PI/180.0;
+    input[1].x = 1;
+    input[1].y = 0;
+    input[1].z = 0;
+    //X.angle_desire = X.angle_desire.getProduct(input);
 
-    input.w = ((rc.yaw-1500)/500.0)*15*PI/180.0;
-    input.x = 0;
-    input.y = 1;
-    input.z = 0;
-    X.angle_desire = X.angle_desire.getProduct(input);
-   //add the yaw/pitch/roll from receiver
+    input[2].w = ((rc.yaw-1500)/500.0)*15*PI/180.0;
+    input[2].x = 0;
+    input[2].y = 1;
+    input[2].z = 0;
+    //X.angle_desire = X.angle_desire.getProduct(input);
+
+    for(int i = 0; i < 3; i++){ //save 88 bytes by putting this in a for loop instead of calling 3 times
+        X.angle_desire = X.angle_desire.getProduct(input[i]);
+    }
    //multiply X by yaw, then pitch, then roll
 }
 
@@ -280,6 +270,49 @@ void Airplane::mode_airplane(){
     servoPos[AIL_L_ID] = limit(rc.roll,30);
     servoPos[AIL_R_ID] = limit(3000 - rc.roll,30);
 }
+void Airplane::mode_heli2(){
+    //This is the calibration mode for now.
+    //Calibrate the aileron offset to counter prop torque (not implemented)
+    //Calibrate throttle to keep constant height (not implemented)
+    mode_heli1();
+
+    //reset the aileron controls - ignore the PID component
+    float ctrl = -X.prop_torque;
+    ctrl = ctrl*500 + 1500;
+    servoPos[AIL_L_ID] = limit(ctrl,33);
+    servoPos[AIL_R_ID] = limit(ctrl,33);
+
+    float current_angle = asin(X.x_vect.z); //290 bytes
+    if(X.z_vect.z < 0){       //correct sign if the x vector is in quadrant 2 or quadrant 3 //72 bytes
+        if(X.x_vect.z < 0)
+            current_angle = -PI-current_angle;
+        else
+            current_angle = PI-current_angle;
+    }
+Serial.println(current_angle);
+    if(X.calib_flag){ //144 bytes (+118bytes prop torque limiting)
+        float difference_angle = X.calib_angle - current_angle;
+        if(abs(difference_angle > 0.01745*10)){ //if it has moved 10 degrees, reset stuff
+            if(difference_angle > 0 && X.prop_torque > 0.01745*10){ //if angle is positive, reduce prop torque offset. Make sure it is greater than 10 degrees
+                X.prop_torque -= 0.01745*5;
+                X.calib_flag = 0;
+            }else if(X.prop_torque < 0.01745*30){ //angle is negative, increase prop torque offset. Make sure it is less than 30 degrees
+                X.prop_torque += 0.01745*5;
+                X.calib_flag = 0;
+            }
+        }
+    }else{ //if calibration is complete, start new calibration
+        //reset angle
+        X.calib_angle = current_angle;
+        //reset time
+        X.calib_t = micros(); //20 bytes
+        //Set the X.calib_flag to 1, indicating calibration in progress
+        X.calib_flag = 1;     //22 bytes
+    }
+    //if yaw angle changes by 15 degrees, find the time it took to move to that position
+
+
+}
 void Airplane::mode_heli1(){
     mode_stop(); //set all other servos to 0, otherwise they get messed up in "add_offset"
     //Try to fly vertical like a helicopter
@@ -298,7 +331,7 @@ void Airplane::mode_heli1(){
         float dum2 = sqrt(pow(X.z_vect.x,2)+ pow(X.z_vect.z,2));  //ORIGINAL
         X.angle_proportional[2] = -(X.x_vect.y*X.x_vect.x/dum+X.z_vect.y*X.z_vect.x/dum2); //save the proportional offset of angle in z-axis for rudder
         X.angle_proportional[0] = (X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //save the proportional offset of angle in x-axis for elevator
-        X.angle_proportional[1] = X.x_vect.z; //angle offset in y-axis is how much the x_vector is off of the x-y plane. (should actually be sin() of this or something)
+        X.angle_proportional[1] = X.x_vect.z;//atan(X.x_vect.z/dum); //;//angle offset in y-axis is how much the x_vector is off of the x-y plane. (should actually be sin() of this or something)
 
         //calculate the integrals
         X.angle_integral[0] += X.angle_proportional[0]* dt/1000000.0; //dt is in microseconds, 1000 000 microseconds in 1 second
@@ -308,7 +341,7 @@ void Airplane::mode_heli1(){
         float max_angle = 0.01745 * 10; //max angle (radians) after which the integral component is reset
         float max_hyst = 0.01745 * 5;  //reset (using hysteresis) if integral is AIDING it from going away from zero
         float max_int = 0.01745 * 10; //max value of integral (so it doesn't wander to infinity)
-        float int_decay = 0.5;
+        float int_decay = 0.75;
         for(int i = 0; i < 3; i++){
             if(abs(X.angle_proportional[i]) > max_angle) //ignore if beyond max angle
                 X.angle_integral[i] *= int_decay;
@@ -324,7 +357,7 @@ void Airplane::mode_heli1(){
         //Make the "rotated x-axis" stay on the x-z plane.
         float Kp = 10; //proportional gain
         float Kd = 15; //derivative gain
-        float Ki = 0.75; //integral gain
+        float Ki = 1.5; //integral gain
 
 
         float ctrl = Kp * X.angle_proportional[2];
@@ -347,12 +380,13 @@ void Airplane::mode_heli1(){
 
         //AILERONS - fix the roll.
         Kp = 5;
-        Kd = 10;
+        Kd = 15;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
-        //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
-        ctrl = ctrl + Kd * X.angle_derivative[1];//X.gy_pred[1];
-        //ctrl = ctrl + Ki*X.angle_integral[1]; //don't use integral gain for roll
+                 //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
+        //ctrl = ctrl + Kd * X.angle_derivative[1];//X.gy_pred[1];
+                //ctrl = ctrl + Ki*X.angle_integral[1]; //don't use integral gain for roll
+        //ctrl = ctrl + X.prop_torque; //add the offset for the prop torque.
         ctrl = ctrl*500 + 1500;
         servoPos[AIL_L_ID] = limit(ctrl,33);
         servoPos[AIL_R_ID] = limit(ctrl,33);
@@ -387,8 +421,8 @@ int Airplane::control(){
     t_prev = micros();
     if(dt > 15000)
         dt = 0; //reset to zero if hte micros() counter rolls over
-    predict_servo(); //predict the current servo position [rad]
-    predict_gy();   //predict the current gyro rate [rad/s]*10000
+    predict_servo(); //predict the current servo position [rad]   //688 bytes
+    predict_gy();   //predict the current gyro rate [rad/s]*10000 //1350bytes
     //predict_integral();    //integrate the angle offset of airplane
 
     int servoPosPrev[5];
@@ -406,6 +440,8 @@ int Airplane::control(){
         mode_airplane();
     else if ((rc.mode < (MODE_HELI + error_max)*5+1500) && (rc.mode > (MODE_HELI - error_max)*5+1500))
         mode_heli1();
+    else if ((rc.mode < (MODE_HELI2 + error_max)*5+1500) && (rc.mode > (MODE_HELI2 - error_max)*5+1500))
+        mode_heli2();
     else
         mode_stop();
 
@@ -457,7 +493,7 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(dat.aa.z);
             Serial.print("\t");
         }
-*/       if (select & 0x04){ //274 bytes
+       if (select & 0x04){ //274 bytes
             Serial.print("gy\t");
             Serial.print(dat.gy.x);
             Serial.print("\t");
@@ -529,6 +565,8 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print(X.x_vect.z);
             Serial.print("]\t");
         }*/
+        Serial.print("Torque: ");
+        Serial.print(X.prop_torque);
         Serial.println("");
         //If battery voltage is below 10.500V, print warning. (under 11V = 6% batt remaining)
         //if(dat.batt < 11000)

@@ -4,7 +4,7 @@
 //#define SD_CARD_USED //Uncomment to use SD card functions (very old - might be broken)
 #include <Arduino.h>
 #include "helper_3dmath.h"
-#include "MemoryFree.h"
+//#include "MemoryFree.h"
 
 // Flags to indicate when a servo position should be updated
 #define SERVO_FLAG_THROTTLE 1
@@ -14,7 +14,7 @@
 #define SERVO_FLAG_ELEV 16
 extern volatile uint8_t ServoUpdateFlags; //extern b/c it is used in the main file
 
-#define THROTTLE_ID 5 //The index of 'servos' for each servo control
+#define THROTTLE_ID 5 //The index of 'servos' for each servo control //4 if on servo bank, 5 if on separate bank
 #define AIL_R_ID   0
 #define AIL_L_ID   1
 #define RUDDER_ID  2
@@ -81,6 +81,10 @@ struct state{ //stores the control system states
     float angle_proportional[3];     //saves the proportional offset of angle
     float angle_derivative[3];    //saves the derivative offset of angle same as gy_pred
 
+    float prop_torque;  //cancels out the torque produced by propeller. [radians]. In gyro predict and heli1 and heli2 modes
+    float calib_angle;  //Used for calibrating prop_torque. Saves the previous angle.
+    unsigned long calib_t; //Used for calibrating prop_torque. Saves the time it takes plane to rotate X degrees.
+    uint8_t calib_flag; //Used for calibrating prop_torque. Set to 0 when calibration is done. Set to 1 when calibration in progress.
 /*
     VectorInt16 pos_g;     //global position [mm]
     VectorFloat v_g;       //global velocity
