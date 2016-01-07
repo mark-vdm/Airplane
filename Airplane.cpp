@@ -89,7 +89,7 @@ void Airplane::predict_gy() //388 bytes
     //X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo //original
     //second part: force applied by the fixed surfaces. Distance from CG: 0.2. Airspeed: 10m/s. Have to convert to Degrees, because the K converts from deg to rad
     const float fixed_surface = 0.75; //the value multiply with the second X.angle_derivative: Must be < 5, the larger it is, the more it limits the predicted gyro rate. (exponential decay to approach a limit)
-    const float fixed_wing = 1;
+    const float fixed_wing = 0.75;
     X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*(X.servo_pred[ELEVATOR_ID] + fixed_surface*X.angle_derivative[0]); //gy x axis, using ELEVATOR servo
     X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*(X.servo_pred[RUDDER_ID] + fixed_surface*X.angle_derivative[2]); //gy z axis, using RUDDER servo
 
@@ -393,7 +393,7 @@ void Airplane::mode_heli1(){
 
         //AILERONS - fix the roll.
         Kp = 5;
-        Kd = 20;
+        Kd = 10;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
                  //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
@@ -402,9 +402,9 @@ void Airplane::mode_heli1(){
         ctrl = ctrl + X.prop_torque; //add the offset for the prop torque.
         ctrl = ctrl*500 + 1500;
         if(ctrl < 1500)
-            servoPos[AIL_R_ID] = limit(ctrl,40); //Let Left aileron have range from -33 to +40 degrees
+            servoPos[AIL_R_ID] = limit(ctrl,45); //Let Left aileron have range from -33 to +40 degrees
         else
-            servoPos[AIL_R_ID] = limit(ctrl,33); //Let Left aileron have range from -33 to +40 degrees
+            servoPos[AIL_R_ID] = limit(ctrl,25); //Let Left aileron have range from -33 to +40 degrees
         servoPos[AIL_L_ID] = limit(ctrl,33);
 
         //get the throttle from receiver
