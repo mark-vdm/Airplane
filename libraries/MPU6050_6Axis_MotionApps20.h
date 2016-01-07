@@ -359,6 +359,7 @@ uint8_t MPU6050::dmpInitialize() {
     // get X/Y/Z gyro offsets
 
     /*DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
+
     int8_t xgOffsetTC = getXGyroOffsetTC();
     int8_t ygOffsetTC = getYGyroOffsetTC();
     int8_t zgOffsetTC = getZGyroOffsetTC();
