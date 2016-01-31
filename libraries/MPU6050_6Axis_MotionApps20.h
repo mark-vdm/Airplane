@@ -358,7 +358,7 @@ uint8_t MPU6050::dmpInitialize() {
 
     // get X/Y/Z gyro offsets
 
-    /*DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
+    DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
 
     int8_t xgOffsetTC = getXGyroOffsetTC();
     int8_t ygOffsetTC = getYGyroOffsetTC();
@@ -369,7 +369,7 @@ uint8_t MPU6050::dmpInitialize() {
     DEBUG_PRINTLN(ygOffsetTC);
     DEBUG_PRINT(F("Z gyro offset = "));
     DEBUG_PRINTLN(zgOffsetTC);
-*/
+
     // setup weird slave stuff (?)
     //DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
     setSlaveAddress(0, 0x7F);
@@ -420,11 +420,11 @@ uint8_t MPU6050::dmpInitialize() {
             DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
             setOTPBankValid(false);
 
-            /*DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
+            DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
             setXGyroOffsetTC(xgOffsetTC);
             setYGyroOffsetTC(ygOffsetTC);
             setZGyroOffsetTC(zgOffsetTC);
-*/
+
             //DEBUG_PRINTLN(F("Setting X/Y/Z gyro user offsets to zero..."));
             //setXGyroOffset(0);
             //setYGyroOffset(0);

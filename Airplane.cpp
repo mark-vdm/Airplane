@@ -12,7 +12,7 @@ Airplane::Airplane(){
     //set the servo offsets for each servo
     servo_offset[AIL_R_ID]=-120-250; //
     servo_offset[AIL_L_ID]=-240 +300;
-    servo_offset[RUDDER_ID]=240;
+    servo_offset[RUDDER_ID]=-10;//240; //rudder goes negative when voltage drops (if at close to full power)
     servo_offset[ELEVATOR_ID]=-80 + 230; //offset to zero servo, + offset to make elevator zero
     servo_offset[THROTTLE_ID]=0;
 
@@ -30,11 +30,11 @@ Airplane::Airplane(){
 
     //multiply these values by 1.5 - smaller prop = higher airspeed = higher force
     //increasing this INCREASES the effect of the derivative gain - flap will move less
-    X.K[1] = 1.918 * 2;//constant multiplier for ROLL (y axis). Divide by 2 because only half the aileron is in the prop wash stream
+    X.K[1] = 1.918 * 2.5;//constant multiplier for ROLL (y axis). Multiply all these because airspeed is probably higher than calculated (10m/s)
     X.K[2] = 0.8506 * 2;//constant multiplier for YAW (z axis)
     X.K[0] = 1.89 * 2;//constant multiplier for PITCH (x axis)
 
-    X.prop_torque = 0.01745*25; //angle of ailerons to cancel out prop torque (found by calibration)
+    X.prop_torque = 0.01745*23; //angle of ailerons to cancel out prop torque (found by calibration)
 //    dat.gy_ar_index = 0;
 //    dat.gy_ar_size = 10;
     X.calib_flag = 0;
@@ -88,10 +88,11 @@ void Airplane::predict_gy() //388 bytes
     //X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*X.servo_pred[ELEVATOR_ID]; //gy x axis, using ELEVATOR servo//original
     //X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo //original
     //second part: force applied by the fixed surfaces. Distance from CG: 0.2. Airspeed: 10m/s. Have to convert to Degrees, because the K converts from deg to rad
-    const float fixed_surface = 0.75; //the value multiply with the second X.angle_derivative: Must be < 5, the larger it is, the more it limits the predicted gyro rate. (exponential decay to approach a limit)
-    const float fixed_wing = 0.75;
+    const float fixed_surface = 0.5; //the value multiply with the second X.angle_derivative: Must be < 5, the larger it is, the more it limits the predicted gyro rate. (exponential decay to approach a limit)
+    const float fixed_rudder = 0.3;
+    const float fixed_wing = 0.3;
     X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*(X.servo_pred[ELEVATOR_ID] + fixed_surface*X.angle_derivative[0]); //gy x axis, using ELEVATOR servo
-    X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*(X.servo_pred[RUDDER_ID] + fixed_surface*X.angle_derivative[2]); //gy z axis, using RUDDER servo
+    X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*(X.servo_pred[RUDDER_ID] + fixed_rudder*X.angle_derivative[2]); //gy z axis, using RUDDER servo
 
 
     //For ailerons, the motor is applying a torque (negative). This is added to the angle of ailerons - NOT included in gyro rate calculation
@@ -136,7 +137,7 @@ void Airplane::predict_gy() //388 bytes
         //}
 
 
-        if(i > 1 && abs(dum[i]) > 0.01745*15){ //check if sensor rate is > 10 deg/s. This means sensor value should be ok //182 bytes
+        if(abs(dum[i]) > 0.01745*15){ //check if sensor rate is > 10 deg/s. This means sensor value should be ok //182 bytes (i > 1 && ) <- i
             //Make sure the predicted value is less than this
             max_rate = abs(dum[i]);
             //X.angle_derivative[i] = dum[i];
@@ -163,14 +164,19 @@ void Airplane::desired_angle()
    X.angle_desire.z = 0;
    X.angle_desire.normalize();  //normalize the quaternion
 
+    int offset[3]; //these offsets are used to make the plane not drift to the side
+    offset[0] = 0;
+    offset[1] = 1; //desired offset
+    offset[2] = 0;
+
     Quaternion input[3];
-    input[0].w = ((rc.roll-1500)/500.0)*5*PI/180.0;
+    input[0].w = ((rc.roll-1500)/500.0)*(5)*PI/180.0;
     input[0].x = 0;
     input[0].y = 0;
     input[0].z = 1;
     //X.angle_desire = X.angle_desire.getProduct(input); //put in for loop to reduce space
 
-    input[1].w = -1*((rc.pitch-1500)/500.0)*5*PI/180.0;
+    input[1].w = -1*((rc.pitch-1500)/500.0)*(10)*PI/180.0 -0.01745*offset[1]; //
     input[1].x = 1;
     input[1].y = 0;
     input[1].z = 0;
@@ -270,7 +276,7 @@ void Airplane::mode_airplane(){
     //Set new positions for the servos
     //if (abs(servoPos[THROTTLE_ID] - rc.throttle) >10)
     servoPos[THROTTLE_ID] = limit(rc.throttle,50); //send the throttle value directly to output
-    servoPos[RUDDER_ID] = limit(rc.yaw,42);
+    servoPos[RUDDER_ID] = limit(rc.yaw,40);
     servoPos[ELEVATOR_ID] = limit(rc.pitch,30);
     servoPos[AIL_L_ID] = limit(rc.roll,30); //aileron L can be more positive (to compensate the prop torque)
     servoPos[AIL_R_ID] = limit(3000 - rc.roll,30);
@@ -368,7 +374,7 @@ void Airplane::mode_heli1(){
 
 
         //Make the "rotated x-axis" stay on the x-z plane.
-        float Kp = 10; //proportional gain
+        float Kp = 12; //proportional gain
         float Kd = 20; //derivative gain
         float Ki = 1.5; //integral gain
 
@@ -380,7 +386,7 @@ void Airplane::mode_heli1(){
         ctrl = ctrl + Kd*X.angle_derivative[2];//X.gy_pred[2]; //derivative control
         ctrl = ctrl + Ki*X.angle_integral[2]; //integral control
         ctrl = ctrl*500 + 1500; //Shift to between 1000,2000
-        servoPos[RUDDER_ID] = limit(ctrl,42);
+        servoPos[RUDDER_ID] = limit(ctrl,40);
 
         //ELEVATOR - same as rudder, but x and z swapped in 'x_vect.x' > 'x_vect.z'
 
@@ -402,7 +408,7 @@ void Airplane::mode_heli1(){
         ctrl = ctrl + X.prop_torque; //add the offset for the prop torque.
         ctrl = ctrl*500 + 1500;
         if(ctrl < 1500)
-            servoPos[AIL_R_ID] = limit(ctrl,45); //Let Left aileron have range from -33 to +40 degrees
+            servoPos[AIL_R_ID] = limit(ctrl,40); //Let Left aileron have range from -33 to +40 degrees. 45 is safe, but needs to be cancelled out with the rudder (I don't know how to do this)
         else
             servoPos[AIL_R_ID] = limit(ctrl,25); //Let Left aileron have range from -33 to +40 degrees
         servoPos[AIL_L_ID] = limit(ctrl,33);
