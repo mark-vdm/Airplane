@@ -46,6 +46,14 @@ RCArduinoFastLib: RC_CHANNEL_OUT_COUNT = #of servos on bank + 1 for the frame = 
 */
 
 
+/*==============================================
+TODOS:
+MPU6050: Get rid of the DMP, do my own kalman filter
+useful tutorial:
+http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/
+================================================
+*/
+
 #include "all_sensors.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
@@ -73,13 +81,13 @@ void dmpDataReady() {
 
 
 //ISR for ultrasonic sensor. Must use separate ISR for each sensor. Must not run simultaneously
-void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+/*void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   // ult_b&r are single-byte vars, so they don't need read/write protection. http://forum.arduino.cc/index.php?topic=45239.0
   //56 us if there is trigger, 12 us if not.
   if (ultra_bot.check_timer()) { // This is how you check to see if the ping was received.
        a.dat.ult_b = ultra_bot.ping_result / US_ROUNDTRIP_CM;
   }
-}
+}*/
 void echoCheck_r() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   if (ultra_rear.check_timer()) { // This is how you check to see if the ping was received.
        a.dat.ult_r = ultra_rear.ping_result / US_ROUNDTRIP_CM;
@@ -266,22 +274,22 @@ c = 0;
 
         // ULTRASONIC: send another ping if 50ms has passed since last
 
-        if (millis() >= pingTimer){ //4us if all false. 500us if trigger.
-            if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
-                ultra_bot.ping_timer(echoCheck);
-                pingTimer += pingSpeed;
-                ULTRA_SELECT = 0;
-            }else if (!ULTRA_SELECT){
+        if (millis() >= pingTimer){ //4us if all false. 500us if trigger. //Removed the bottom ultra sensor. This saved ~200 bytes
+//            if (ULTRA_SELECT){  //swap between checking bottom and rear ultrasonic
+//                ultra_bot.ping_timer(echoCheck);
+//                pingTimer += pingSpeed;
+//                ULTRA_SELECT = 0;
+//            }else if (!ULTRA_SELECT){
                 ultra_rear.ping_timer(echoCheck_r);
                 pingTimer += pingSpeed;
-                ULTRA_SELECT = 1;
-            }
+//                ULTRA_SELECT = 1;
+//            }
         }
 
         //check if the ultrasonics see nothing
-        if (!ultra_bot.ping_result){
-            a.dat.ult_b = 0;
-        }
+//        if (!ultra_bot.ping_result){
+//            a.dat.ult_b = 0;
+//        }
         if (!ultra_rear.ping_result){
             a.dat.ult_r = 0;
         }

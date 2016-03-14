@@ -88,9 +88,9 @@ void Airplane::predict_gy() //388 bytes
     //X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*X.servo_pred[ELEVATOR_ID]; //gy x axis, using ELEVATOR servo//original
     //X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*X.servo_pred[RUDDER_ID]; //gy z axis, using RUDDER servo //original
     //second part: force applied by the fixed surfaces. Distance from CG: 0.2. Airspeed: 10m/s. Have to convert to Degrees, because the K converts from deg to rad
-    const float fixed_surface = 0.5; //the value multiply with the second X.angle_derivative: Must be < 5, the larger it is, the more it limits the predicted gyro rate. (exponential decay to approach a limit)
-    const float fixed_rudder = 0.3;
-    const float fixed_wing = 0.3;
+    const float fixed_surface = 0.6; //the value multiply with the second X.angle_derivative: Must be < 5, the larger it is, the more it limits the predicted gyro rate. (exponential decay to approach a limit)
+    const float fixed_rudder = 0.4;
+    const float fixed_wing = 0.25;
     X.gy_pred[3] = X.angle_derivative[0] - (dt/1000000.0)*X.K[0]*(X.servo_pred[ELEVATOR_ID] + fixed_surface*X.angle_derivative[0]); //gy x axis, using ELEVATOR servo
     X.gy_pred[2] = X.angle_derivative[2] - (dt/1000000.0)*X.K[2]*(X.servo_pred[RUDDER_ID] + fixed_rudder*X.angle_derivative[2]); //gy z axis, using RUDDER servo
 
@@ -156,6 +156,8 @@ void Airplane::predict_gy() //388 bytes
 }
 void Airplane::desired_angle()
 {
+    //TODO: make it so the desired ROLL is set when it is switched to the heli1 mode.
+    //TODO:
     //calculate the desired angle
     //For now, assume desired angle is ALWAYS VERTICAL
    X.angle_desire.w = 0.7071; //set desired angle as vertical
@@ -353,14 +355,14 @@ void Airplane::mode_heli1(){
         X.angle_proportional[1] = X.x_vect.z;//atan(X.x_vect.z/dum); //;//angle offset in y-axis is how much the x_vector is off of the x-y plane. (should actually be sin() of this or something)
 
         //calculate the integrals
-        X.angle_integral[0] += X.angle_proportional[0]* dt/1000000.0; //dt is in microseconds, 1000 000 microseconds in 1 second
+        X.angle_integral[0] += X.angle_proportional[0]* dt/1000000.0; //dt is in microseconds, 1 000 000 microseconds in 1 second
         X.angle_integral[1] += X.angle_proportional[1]* dt/1000000.0;
         X.angle_integral[2] += X.angle_proportional[2]* dt/1000000.0;
         //reset the integral with hysterisys - if it is opposite sign and actual offset is > 5 degrees
-        float max_angle = 0.01745 * 10; //max angle (radians) after which the integral component is reset
+        float max_angle = 0.01745 * 15; //max angle (radians) after which the integral component is reset
         float max_hyst = 0.01745 * 5;  //reset (using hysteresis) if integral is AIDING it from going away from zero
-        float max_int = 0.01745 * 10; //max value of integral (so it doesn't wander to infinity)
-        float int_decay = 0.75;
+        float max_int = 0.01745 * 5; //max value of integral (so it doesn't wander to infinity)
+        float int_decay = 0.9;
         for(int i = 0; i < 3; i++){
             if(abs(X.angle_proportional[i]) > max_angle) //ignore if beyond max angle
                 X.angle_integral[i] *= int_decay;
@@ -376,7 +378,7 @@ void Airplane::mode_heli1(){
         //Make the "rotated x-axis" stay on the x-z plane.
         float Kp = 12; //proportional gain
         float Kd = 20; //derivative gain
-        float Ki = 1.5; //integral gain
+        float Ki = 2; //integral gain
 
 
         float ctrl = Kp * X.angle_proportional[2];
@@ -384,6 +386,7 @@ void Airplane::mode_heli1(){
         //Get the rate of rotation in z-axis. use gy_av for the average rate of rotation (because min sensitivity of sensor is 3deg/s0
 //        ctrl = ctrl + Kd*dat.gy_av.z*(1.5/1.0)*(PI/180.0); //add the derivative control (or more precisely: subtract it) 32768 is equal to 250 deg/second rotation. 1deg = pi/180 rad
         ctrl = ctrl + Kd*X.angle_derivative[2];//X.gy_pred[2]; //derivative control
+ //ctrl = 0;//debut for integral
         ctrl = ctrl + Ki*X.angle_integral[2]; //integral control
         ctrl = ctrl*500 + 1500; //Shift to between 1000,2000
         servoPos[RUDDER_ID] = limit(ctrl,40);
@@ -393,6 +396,7 @@ void Airplane::mode_heli1(){
         ctrl = Kp * X.angle_proportional[0]; //(X.x_vect.y*X.x_vect.z/dum+X.z_vect.y*X.z_vect.z/dum2); //proportional
         //ctrl = ctrl + Kd * dat.gy_av.x*(1.5/1.0)*(PI/180.0);                                      //derivative
         ctrl = ctrl + Kd * X.angle_derivative[0];//X.gy_pred[3];  //derivative - predicted gyro in the x-axis
+//ctrl = 0;//debut for integral
         ctrl = ctrl + Ki*X.angle_integral[0]; //integral -
         ctrl = ctrl*500 + 1500;
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
@@ -441,7 +445,7 @@ int Airplane::control(){
     //update the time
     dt = micros() - t_prev;
     t_prev = micros();
-    if(dt > 15000)
+    if(dt > 50000 || dt < 0)
         dt = 0; //reset to zero if hte micros() counter rolls over
     predict_servo(); //predict the current servo position [rad]   //688 bytes
     predict_gy();   //predict the current gyro rate [rad/s]*10000 //1350bytes
@@ -588,9 +592,11 @@ void Airplane::print_sensors(uint8_t select){
             Serial.print("]\t");
         }*/
 
-
-        Serial.print("Torque: ");
-        Serial.print(X.prop_torque*180/PI); //this takes 800 bytjes??? WTF?? X.prop_torque IS used elsewhere.
+//X.angle_integral[i
+//Serial.print("Int: ");
+Serial.print(X.angle_integral[0]);
+//        Serial.print("  /tTorque: ");
+//        Serial.print(X.prop_torque*180/PI); //this takes 800 bytjes??? WTF?? X.prop_torque IS used elsewhere.
         Serial.println("");
 
         //If battery voltage is below 10.500V, print warning. (under 11V = 6% batt remaining)
