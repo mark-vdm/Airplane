@@ -178,7 +178,7 @@ void Airplane::desired_angle()
     input[0].z = 1;
     //X.angle_desire = X.angle_desire.getProduct(input); //put in for loop to reduce space
 
-    input[1].w = -1*((rc.pitch-1500)/500.0)*(10)*PI/180.0 -0.01745*offset[1]; //
+    input[1].w = -1*((rc.pitch-1500)/500.0)*(10)*PI/180.0 - 0.01745*offset[1]; //
     input[1].x = 1;
     input[1].y = 0;
     input[1].z = 0;

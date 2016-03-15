@@ -61,9 +61,9 @@ MPU6050::MPU6050(uint8_t address) {
  * the default internal clock source.
  */
 void MPU6050::initialize() {
-    setClockSource(MPU6050_CLOCK_PLL_XGYRO);
-    setFullScaleGyroRange(MPU6050_GYRO_FS_250);
-    setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+    //setClockSource(MPU6050_CLOCK_PLL_XGYRO); //mark
+    //setFullScaleGyroRange(MPU6050_GYRO_FS_250);
+    //setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
 }
 
@@ -83,19 +83,19 @@ bool MPU6050::testConnection() {
  * the MPU-6000, which does not have a VLOGIC pin.
  * @return I2C supply voltage level (0=VLOGIC, 1=VDD)
  */
-uint8_t MPU6050::getAuxVDDIOLevel() {
+/*uint8_t MPU6050::getAuxVDDIOLevel() {
     I2Cdev::readBit(devAddr, MPU6050_RA_YG_OFFS_TC, MPU6050_TC_PWR_MODE_BIT, buffer);
     return buffer[0];
-}
+}*/
 /** Set the auxiliary I2C supply voltage level.
  * When set to 1, the auxiliary I2C bus high logic level is VDD. When cleared to
  * 0, the auxiliary I2C bus high logic level is VLOGIC. This does not apply to
  * the MPU-6000, which does not have a VLOGIC pin.
  * @param level I2C supply voltage level (0=VLOGIC, 1=VDD)
  */
-void MPU6050::setAuxVDDIOLevel(uint8_t level) {
+/*void MPU6050::setAuxVDDIOLevel(uint8_t level) {
     I2Cdev::writeBit(devAddr, MPU6050_RA_YG_OFFS_TC, MPU6050_TC_PWR_MODE_BIT, level);
-}
+}*/
 
 // SMPLRT_DIV register
 
@@ -261,7 +261,7 @@ void MPU6050::setFullScaleGyroRange(uint8_t range) {
  */
 uint8_t MPU6050::getAccelXSelfTestFactoryTrim() {
     I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_X, &buffer[0]);
-	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);	
+	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);
     return (buffer[0]>>3) | ((buffer[1]>>4) & 0x03);
 }
 
@@ -271,7 +271,7 @@ uint8_t MPU6050::getAccelXSelfTestFactoryTrim() {
  */
 uint8_t MPU6050::getAccelYSelfTestFactoryTrim() {
     I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Y, &buffer[0]);
-	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);	
+	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);
     return (buffer[0]>>3) | ((buffer[1]>>2) & 0x03);
 }
 
@@ -280,7 +280,7 @@ uint8_t MPU6050::getAccelYSelfTestFactoryTrim() {
  * @see MPU6050_RA_SELF_TEST_Z
  */
 uint8_t MPU6050::getAccelZSelfTestFactoryTrim() {
-    I2Cdev::readBytes(devAddr, MPU6050_RA_SELF_TEST_Z, 2, buffer);	
+    I2Cdev::readBytes(devAddr, MPU6050_RA_SELF_TEST_Z, 2, buffer);
     return (buffer[0]>>3) | (buffer[1] & 0x03);
 }
 
@@ -289,7 +289,7 @@ uint8_t MPU6050::getAccelZSelfTestFactoryTrim() {
  * @see MPU6050_RA_SELF_TEST_X
  */
 uint8_t MPU6050::getGyroXSelfTestFactoryTrim() {
-    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_X, buffer);	
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_X, buffer);
     return (buffer[0] & 0x1F);
 }
 
@@ -298,7 +298,7 @@ uint8_t MPU6050::getGyroXSelfTestFactoryTrim() {
  * @see MPU6050_RA_SELF_TEST_Y
  */
 uint8_t MPU6050::getGyroYSelfTestFactoryTrim() {
-    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Y, buffer);	
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Y, buffer);
     return (buffer[0] & 0x1F);
 }
 
@@ -307,7 +307,7 @@ uint8_t MPU6050::getGyroYSelfTestFactoryTrim() {
  * @see MPU6050_RA_SELF_TEST_Z
  */
 uint8_t MPU6050::getGyroZSelfTestFactoryTrim() {
-    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Z, buffer);	
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Z, buffer);
     return (buffer[0] & 0x1F);
 }
 
@@ -452,18 +452,18 @@ void MPU6050::setDHPFMode(uint8_t bandwidth) {
  * @return Current free-fall acceleration threshold value (LSB = 2mg)
  * @see MPU6050_RA_FF_THR
  */
-uint8_t MPU6050::getFreefallDetectionThreshold() {
+/*uint8_t MPU6050::getFreefallDetectionThreshold() {
     I2Cdev::readByte(devAddr, MPU6050_RA_FF_THR, buffer);
     return buffer[0];
-}
+}*/
 /** Get free-fall event acceleration threshold.
  * @param threshold New free-fall acceleration threshold value (LSB = 2mg)
  * @see getFreefallDetectionThreshold()
  * @see MPU6050_RA_FF_THR
  */
-void MPU6050::setFreefallDetectionThreshold(uint8_t threshold) {
+/*void MPU6050::setFreefallDetectionThreshold(uint8_t threshold) {
     I2Cdev::writeByte(devAddr, MPU6050_RA_FF_THR, threshold);
-}
+}*/
 
 // FF_DUR register
 
@@ -484,18 +484,18 @@ void MPU6050::setFreefallDetectionThreshold(uint8_t threshold) {
  * @return Current free-fall duration threshold value (LSB = 1ms)
  * @see MPU6050_RA_FF_DUR
  */
-uint8_t MPU6050::getFreefallDetectionDuration() {
+/*uint8_t MPU6050::getFreefallDetectionDuration() {
     I2Cdev::readByte(devAddr, MPU6050_RA_FF_DUR, buffer);
     return buffer[0];
-}
+}*/
 /** Get free-fall event duration threshold.
  * @param duration New free-fall duration threshold value (LSB = 1ms)
  * @see getFreefallDetectionDuration()
  * @see MPU6050_RA_FF_DUR
  */
-void MPU6050::setFreefallDetectionDuration(uint8_t duration) {
+/*void MPU6050::setFreefallDetectionDuration(uint8_t duration) {
     I2Cdev::writeByte(devAddr, MPU6050_RA_FF_DUR, duration);
-}
+}*/
 
 // MOT_THR register
 
@@ -920,7 +920,7 @@ void MPU6050::setMasterClockSpeed(uint8_t speed) {
  * operation, and if it is cleared, then it's a write operation. The remaining
  * bits (6-0) are the 7-bit device address of the slave device.
  *
- * In read mode, the result of the read is placed in the lowest available 
+ * In read mode, the result of the read is placed in the lowest available
  * EXT_SENS_DATA register. For further information regarding the allocation of
  * read results, please refer to the EXT_SENS_DATA register description
  * (Registers 73 - 96).
@@ -3014,7 +3014,7 @@ void MPU6050::readMemoryBlock(uint8_t *data, uint16_t dataSize, uint8_t bank, ui
 
         // read the chunk of data as specified
         I2Cdev::readBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, data + i);
-        
+
         // increase byte index by [chunkSize]
         i += chunkSize;
 
@@ -3048,7 +3048,7 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t b
 
         // make sure this chunk doesn't go past the bank boundary (256 bytes)
         if (chunkSize > 256 - address) chunkSize = 256 - address;
-        
+
         if (useProgMem) {
             // write the chunk of data as specified
             for (j = 0; j < chunkSize; j++) progBuffer[j] = pgm_read_byte(data + i + j);
@@ -3163,7 +3163,7 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
             Serial.println(" found...");*/
             if (special == 0x01) {
                 // enable DMP-related interrupts
-                
+
                 //setIntZeroMotionEnabled(true);
                 //setIntFIFOBufferOverflowEnabled(true);
                 //setIntDMPEnabled(true);
@@ -3175,7 +3175,7 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
                 success = false;
             }
         }
-        
+
         if (!success) {
             if (useProgMem) free(progBuffer);
             return false; // uh oh

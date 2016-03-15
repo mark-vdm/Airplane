@@ -125,7 +125,7 @@ extern volatile bool mpuInterrupt;
 //Ultrasonic vars
 //NewPing ultra_bot(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 NewPing ultra_rear(TRIGGER_PINR, ECHO_PINR, MAX_DISTANCE);
-unsigned int pingSpeed = 50; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
+uint8_t pingSpeed = 50; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
 unsigned long pingTimer;     // Holds the next ping time.
 uint8_t ULTRA_SELECT = 0;
 

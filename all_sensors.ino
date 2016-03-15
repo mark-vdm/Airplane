@@ -294,10 +294,7 @@ c = 0;
             a.dat.ult_r = 0;
         }
 
-        //delay(100);
 
-
-        //a.update_angle(); //moved to the IMU update section - only updates with IMU
 
 
         update_receiver();

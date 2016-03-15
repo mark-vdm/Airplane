@@ -340,19 +340,19 @@ uint8_t MPU6050::dmpInitialize() {
 
     // get MPU hardware revision
     DEBUG_PRINTLN(F("Selecting user bank 16..."));
-    setMemoryBank(0x10, true, true);
+    //setMemoryBank(0x10, true, true);//mark
     DEBUG_PRINTLN(F("Selecting memory byte 6..."));
-    setMemoryStartAddress(0x06);
+    //setMemoryStartAddress(0x06);//mark
     DEBUG_PRINTLN(F("Checking hardware revision..."));
-    uint8_t hwRevision = readMemoryByte();
+    //uint8_t hwRevision = readMemoryByte();//mark
     DEBUG_PRINT(F("Revision @ user[16][6] = "));
     DEBUG_PRINTLNF(hwRevision, HEX);
     DEBUG_PRINTLN(F("Resetting memory bank selection to 0..."));
-    setMemoryBank(0, false, false);
+    //setMemoryBank(0, false, false); //mark
 
     // check OTP bank valid
     DEBUG_PRINTLN(F("Reading OTP bank valid flag..."));
-    uint8_t otpValid = getOTPBankValid();
+    //uint8_t otpValid = getOTPBankValid(); //mark
     DEBUG_PRINT(F("OTP bank is "));
     DEBUG_PRINTLN(otpValid ? F("valid!") : F("invalid!"));
 
@@ -444,24 +444,24 @@ uint8_t MPU6050::dmpInitialize() {
             resetFIFO();
 
             DEBUG_PRINTLN(F("Reading FIFO count..."));
-            uint16_t fifoCount = getFIFOCount();
+            uint16_t fifoCount;//  = getFIFOCount(); //mark//
             uint8_t fifoBuffer[128];
 
             DEBUG_PRINT(F("Current FIFO count="));
             DEBUG_PRINTLN(fifoCount);
-            getFIFOBytes(fifoBuffer, fifoCount);
+            //getFIFOBytes(fifoBuffer, fifoCount);//mark
 
             DEBUG_PRINTLN(F("Setting motion detection threshold to 2..."));
-            setMotionDetectionThreshold(2);
+            //setMotionDetectionThreshold(2); //mark
 
             DEBUG_PRINTLN(F("Setting zero-motion detection threshold to 156..."));
-            setZeroMotionDetectionThreshold(156);
+            //setZeroMotionDetectionThreshold(156); //mark
 
             DEBUG_PRINTLN(F("Setting motion detection duration to 80..."));
-            setMotionDetectionDuration(80);
+            //setMotionDetectionDuration(80);//mark
 
             DEBUG_PRINTLN(F("Setting zero-motion detection duration to 0..."));
-            setZeroMotionDetectionDuration(0);
+            //setZeroMotionDetectionDuration(0);//mark
 
             DEBUG_PRINTLN(F("Resetting FIFO..."));
             resetFIFO();
@@ -496,7 +496,7 @@ uint8_t MPU6050::dmpInitialize() {
             getFIFOBytes(fifoBuffer, fifoCount);
 
             DEBUG_PRINTLN(F("Reading interrupt status..."));
-            uint8_t mpuIntStatus = getIntStatus();
+            //uint8_t mpuIntStatus = getIntStatus(); //mark
 
             DEBUG_PRINT(F("Current interrupt status="));
             DEBUG_PRINTLNF(mpuIntStatus, HEX);
@@ -515,7 +515,7 @@ uint8_t MPU6050::dmpInitialize() {
             getFIFOBytes(fifoBuffer, fifoCount);
 
             DEBUG_PRINTLN(F("Reading interrupt status..."));
-            mpuIntStatus = getIntStatus();
+            //mpuIntStatus = getIntStatus(); //mark
 
             DEBUG_PRINT(F("Current interrupt status="));
             DEBUG_PRINTLNF(mpuIntStatus, HEX);
