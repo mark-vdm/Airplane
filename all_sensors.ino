@@ -51,6 +51,9 @@ TODOS:
 MPU6050: Get rid of the DMP, do my own kalman filter
 useful tutorial:
 http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/
+extended kalman filter tutorial
+http://home.wlu.edu/~levys/kalman_tutorial/
+http://bilgin.esme.org/BitsAndBytes/KalmanFilterforDummies
 ================================================
 */
 
@@ -322,7 +325,7 @@ c = 0;
     //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    //a.print_sensors(0x04); //takes up 1000 bytes of program memory
+    a.print_sensors(0x04); //takes up 1000 bytes of program memory
 
 
     a.check_batt(); //150 bytes
@@ -410,6 +413,8 @@ int initialize_imu(){
     // load and configure the DMP
 //    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
+    mpu.setDLPFMode(MPU6050_DLPF_BW_20); //set the digital low pass filter//8 bytes
+
 
     // supply your own gyro offsets here, scaled for min sensitivity. (Change these values until the dmpGetGy() values start at 0)
     mpu.setXGyroOffset(105);

@@ -69,7 +69,9 @@ struct state{ //stores the control system states
     Quaternion angle_desire;   //desired angle
     Quaternion angle_off_q; // This quaternion points from the AIRPLANE orientation to the DESIRED orientation. angle*angle_off_q = angle_desired
     //VectorFloat angle_off;
-    VectorFloat angle_v; //Angle of airplane, vector form. Useful for finding inclination and yaw. Z-component is inclination
+    VectorFloat angle_vy; //Angle of airplane y-axis, vector form. Useful for finding inclination and yaw. Z-component is inclination
+    VectorFloat angle_vx; //Angle of airplane x-axis, vector form. Useful for finding the YAW offset
+    VectorFloat angle_vz; //angle of airplane z-axis, vector form. Useful for finding the YAW offset
     //VectorFloat angle_d; //SLERP between actual angle and desired angle
     //VectorFloat Iangle_off; //integral of angle offset (for integral controller)
 
@@ -99,8 +101,35 @@ struct state{ //stores the control system states
 */
     float servo_pred[4];          //stores the current position of each servo [rad]
     float gy_pred[4];       //predicted rate of rotation [rad/s] //16 bytes
+
     float K[3];             //gain value for converting angle of flap to predicted rate of rotation (see derivation in matlab/scratch notes)
     //float incline;  //This is the inclination of the airplane (angle from horizontal) (horizontal = 0, vertical = 90). Equal to angle_v.z
+};
+struct ekftState{ //stores information for EKF
+    /* State used:
+    *   x = rate of change, torque, torque scale, torque bias
+    *
+    */
+    double x[4]; //state
+    double u[1]; //control input (flap angle)
+    double y[4]; //measurement state
+
+    double G[4]; //linearized state
+    double H[4]; //linearized measurement model
+
+    double xprev[4]; //previous state
+    double mu[4]; //current predicted state
+    double muprev[4]; //
+    double A[4][4]; //part of state model, copy from prev state
+    double B[4];    //part of state model, add from input
+
+    double epsilon[4][4];
+    double epsilonprev[4][4];
+    double K [4][4]; //kalman gain
+
+    double R[4]; //covariance matrix for measurement. Big number = don't trust
+    double Q[4]; //covariance matrix for model. Big number = don't trust it
+    int I[4][4]; //identity matrix (set 1's in the diagonal)
 };
 
 class Airplane{
@@ -113,6 +142,7 @@ class Airplane{
         void init(); //initialize stuff
         //void outpt();
 
+        ekftState EKF;
         state X; //holds the control state of the airplane
         sensordata dat; //holds onto the raw sensor values
         receiver rc;    //holds onto the raw receiver values
@@ -121,8 +151,11 @@ class Airplane{
 
          void update_angle(); //updates the angles (vectors and stuff)
          void desired_angle(); //calculates the desired angle
+         void desired_angle_roll_offset(); //get the current ROLL value, save it
 
         int servoPos[6];
+
+
 
         int servo_offset[6]; //offsets for servos
         int servo_scaling[6]; //scaling for servo (percentage)
@@ -132,10 +165,17 @@ class Airplane{
         int check_batt();
        void average_gy();  //calculate the average gyro value
        void predict_gy();   //calculate the predicted gyro value
+       void get_gy();
        void predict_servo(); //calculate the predicted servo position
        void predict_integral(); //calculate the integral of angle offset (implemented inside mode_heli1)
        void mode_stop();
        void add_offset(); //add the offsets for each servo
+
+       void ekf_predict_gy(); //use EKF to estimate gyro rate
+
+       double roll_offset; //offset [radians] of the yaw value. This makes the airplane start at '0' when launched
+       bool roll_offset_negative; //set to 1 if the airplane is 'upside down'. Set to 0 if airplane is 'right side up'. Flips the sign of aileron control.
+
     private:
         //Routines for different flight modes
 
