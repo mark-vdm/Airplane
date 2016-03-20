@@ -249,7 +249,7 @@ void Airplane::desired_angle()
 
 void Airplane::desired_angle_roll_offset()
 {
-
+/*
     //get the current roll angle [radians], save it
     roll_offset = 0;
     //update_angle(); //update the angle from the IMU readings -> this is not needed because the X.angle_vz and _vx are not affected by roll_offset
@@ -265,6 +265,8 @@ void Airplane::desired_angle_roll_offset()
     roll_offset_negative = 0; //calculate if the airplane is 'upside down'
     if (X.z_vect.z < 0)
         roll_offset_negative = 1; //calculate if the airplane is 'upside down'
+
+        */
 }
 
 void Airplane::update_angle(){
@@ -306,7 +308,8 @@ X.angle = dat.q;  //get angle from stored sensor value
     dummy[4].z = 1;
 
 
-    for(int i = 0; i < 5; i++){
+    //for(int i = 0; i < 5; i++){ //added an extra one for the yaw calibration
+    for(int i = 0; i < 4; i++){
         if(i<3)
             q0 = X.angle_off_q;
         else
@@ -484,8 +487,8 @@ void Airplane::mode_heli1(){
         }
 */
         //Make the "rotated x-axis" stay on the x-z plane.
-        float Kp = 1.5; //proportional gain
-        float Kd = 1.75; //derivative gain
+        float Kp = 1; //proportional gain
+        float Kd = 0.8; //derivative gain
         float Ki = 0;//2; //integral gain
 
 
@@ -510,8 +513,8 @@ void Airplane::mode_heli1(){
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
 
         //AILERONS - fix the roll.
-        Kp = 0.25;
-        Kd = 0.75;//4;
+        Kp = 0.3;
+        Kd = 0.5;//4;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
                  //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
