@@ -325,7 +325,7 @@ c = 0;
     //Serial.print(c);
     a.update_angle(); //update the vector angles and offset from desired //1450us
 
-    a.print_sensors(0x04); //takes up 1000 bytes of program memory
+    //a.print_sensors(0x04); //takes up 1000 bytes of program memory
 
 
     a.check_batt(); //150 bytes
@@ -347,8 +347,10 @@ int update_imu(){  //there are linker errors if I put this fn in a separate file
     // check for overflow (this should never happen unless our code is too inefficient)
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
+
         mpu.resetFIFO();
-        //Serial.println(F("FIFO overflow!"));
+       // initialize_imu(); //reset whole IMU. This is because program DIES if fifo overflow occurs.
+        Serial.println(F("FIFO overflow!"));
 
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
     } else if (mpuIntStatus & 0x02) {
@@ -413,7 +415,7 @@ int initialize_imu(){
     // load and configure the DMP
 //    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
-    mpu.setDLPFMode(MPU6050_DLPF_BW_20); //set the digital low pass filter//8 bytes
+    mpu.setDLPFMode(MPU6050_DLPF_BW_98); //set the digital low pass filter//8 bytes
 
 
     // supply your own gyro offsets here, scaled for min sensitivity. (Change these values until the dmpGetGy() values start at 0)

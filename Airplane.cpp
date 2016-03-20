@@ -249,9 +249,11 @@ void Airplane::desired_angle()
 
 void Airplane::desired_angle_roll_offset()
 {
+
     //get the current roll angle [radians], save it
     roll_offset = 0;
-    update_angle(); //update the angle from the IMU readings
+    //update_angle(); //update the angle from the IMU readings -> this is not needed because the X.angle_vz and _vx are not affected by roll_offset
+
 
     //float dum = sqrt(pow(X.x_vect.x,2)+ pow(X.x_vect.z,2));   //This approaches 1 when the axis is parallel to x-axis. 0 if parallel to z-axis?
     //roll_offset = atan(X.x_vect.z/dum); = asin(X.x_vect.z) + asin(X.y_vect.z);
@@ -482,8 +484,8 @@ void Airplane::mode_heli1(){
         }
 */
         //Make the "rotated x-axis" stay on the x-z plane.
-        float Kp = 2; //proportional gain
-        float Kd = 10; //derivative gain
+        float Kp = 1.5; //proportional gain
+        float Kd = 1.75; //derivative gain
         float Ki = 0;//2; //integral gain
 
 
@@ -508,14 +510,14 @@ void Airplane::mode_heli1(){
         servoPos[ELEVATOR_ID] = limit(ctrl,30);
 
         //AILERONS - fix the roll.
-        Kp = 1.5;
-        Kd = 0;//4;
+        Kp = 0.25;
+        Kd = 0.75;//4;
 
         ctrl = Kp * X.angle_proportional[1];//X.x_vect.z; //if this is -ve, it flips the plane's orentation by 180 degrees. Double check in case it wants to fly upside-down.
                  //ctrl = ctrl + Kd * dat.gy_av.y*(1.5/1.0)*(PI/180.0);
         ctrl = ctrl + Kd * X.angle_derivative[1];//X.gy_pred[1];
                 //ctrl = ctrl + Ki*X.angle_integral[1]; //don't use integral gain for roll
-        //ctrl = ctrl + X.prop_torque; //add the offset for the prop torque.
+        ctrl = ctrl - X.prop_torque; //add the offset for the prop torque.
         ctrl = ctrl*500 + 1500;
         if(ctrl < 1500)
             servoPos[AIL_R_ID] = limit(ctrl,40); //Let Left aileron have range from -33 to +40 degrees. 45 is safe, but needs to be cancelled out with the rudder (I don't know how to do this)
@@ -549,10 +551,22 @@ int Airplane::limit(int value, int deg){
 int Airplane::control(){
     //This is the main control algorithm for the airplane. Call every cycle
     //update the time
-    dt = micros() - t_prev;
+    //Serial.print("Ctrl ");
+    //Serial.print(micros());
+    //Serial.print("  ");
+    unsigned long dt = micros() - t_prev;
+    //Serial.println(dt);
+
     t_prev = micros();
-    if(dt > 50000 || dt < 0)
-        dt = 0; //reset to zero if hte micros() counter rolls over
+    if(dt > 50000){//} || dt < 0){
+
+        //Serial.print("FAIL");
+        //Serial.print(t_prev);
+        //Serial.print(" ");
+        //Serial.print(dt);
+        //Serial.print(" ");
+        dt = 1; //reset to zero if hte micros() counter rolls over
+    }
     predict_servo(); //predict the current servo position [rad]   //688 bytes
     //predict_gy();   //predict the current gyro rate [rad/s]*10000 //1392bytes
     get_gy();       //get the current gyro rate [what unit?]. Replaces the predict_gy() function
@@ -598,6 +612,8 @@ int Airplane::control(){
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_L;
     if (abs(servoPosPrev[AIL_R_ID] - servoPos[AIL_R_ID])>10)
         ServoUpdateFlags = ServoUpdateFlags | SERVO_FLAG_R;
+
+        //Serial.println("End ");
 
 }
 
